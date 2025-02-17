@@ -1,7 +1,7 @@
 function [PE,set1PE,set2PE,set3PE] = calculatePE(resultpath,subj)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
-subj = num2str(subj, '%03d');
+subj = num2str(subj);
 
 load([resultpath 'sonuc_' subj '.mat'])
 display(['Working on: sonuc_', subj ]);
