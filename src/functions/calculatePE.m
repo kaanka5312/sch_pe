@@ -1,10 +1,7 @@
-function [PE,set1PE,set2PE,set3PE] = calculatePE(resultpath,subj)
+function [PE,set1PE,set2PE,set3PE] = calculatePE(sonuc)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
-subj = num2str(subj);
-
-load([resultpath 'sonuc_' subj '.mat'])
-display(['Working on: sonuc_', subj ]);
+display(['Working on: sonuc_', num2str(sonuc.subjectID) ]);
 
 set3PE = 0;
 set2PE = 0; 

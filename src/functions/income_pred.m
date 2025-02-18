@@ -1,6 +1,7 @@
 function [sonuc] = income_pred(T,subj)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
+disp(num2str(subj))
 T_filtered = T(T.denekId == subj,:);
 denekID = subj;
 A = table2array(T_filtered);
