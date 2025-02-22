@@ -37,8 +37,7 @@ normalized_pe_array = cellfun(@(x) normalization(x),pe_array,'UniformOutput',fal
 
 spm_pe = cellfun(@(x) spm_pe_regressor(x),normalized_pe_array,'UniformOutput',false);
 
-% Saving pe as regressor
-
+%% Saving pe as regressor for SPM
 for i = 1:numel(spm_pe)
     % Extract the numeric data from the i-th cell
     data = spm_pe{i};  % data is 498x1 double
@@ -50,3 +49,13 @@ for i = 1:numel(spm_pe)
     % Write to a .txt file
     writematrix(data, filename);
 end
+%% Saving PE arrays for comparison and compare in R 
+
+% Extract second column and convert to matrix
+merged_matrix = cell2mat(cellfun(@(x) x(:,1)', pe_array, 'UniformOutput', false));
+merged_matrix = [merged_matrix, S.group];
+save('./data/processed/pe_array.mat', 'merged_matrix');
+
+merged_matrix = cell2mat(cellfun(@(x) x(:,2)', normalized_pe_array, 'UniformOutput', false));
+merged_matrix = [merged_matrix, S.group];
+save('./data/processed/normalized_pe_array.mat', 'merged_matrix');
