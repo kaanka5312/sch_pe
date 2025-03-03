@@ -65,7 +65,7 @@ end
 % Extract second column and convert to matrix
 merged_matrix = cell2mat(cellfun(@(x) x(:,1)', pe_array, 'UniformOutput', false));
 merged_matrix = [merged_matrix, S.group];
-save('./data/processed/pe_array.mat', 'merged_matrix');
+save('./data/processed/pe_array2.mat', 'merged_matrix');
 
 merged_matrix = cell2mat(cellfun(@(x) x(:,2)', normalized_pe_array, 'UniformOutput', false));
 merged_matrix = [merged_matrix, S.group];

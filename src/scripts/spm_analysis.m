@@ -203,6 +203,14 @@ for i= 1:numel(S.name) % Subject's name
          jobs{1}.spm.stats.con.consess{22}.tcon.weights = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 0.5 0 0 0 0 0 0.5 0];
          jobs{1}.spm.stats.con.consess{22}.tcon.sessrep = 'none';
 
+         jobs{1}.spm.stats.con.consess{23}.tcon.name = 'Anticipation_all < (Response_all)';
+         jobs{1}.spm.stats.con.consess{23}.tcon.weights = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 1 0 0 0 0 0 0 0];
+         jobs{1}.spm.stats.con.consess{23}.tcon.sessrep = 'none';
+
+         jobs{1}.spm.stats.con.consess{24}.tcon.name = 'Anticipation_all > (Response_all)';
+         jobs{1}.spm.stats.con.consess{24}.tcon.weights = [0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 -1 0 0 0 0 0 0 0];
+         jobs{1}.spm.stats.con.consess{24}.tcon.sessrep = 'none';
+
         % % (Optional) Customize contrast names, weights, or type if needed here
         % % e.g.:
          % Stronger priors all

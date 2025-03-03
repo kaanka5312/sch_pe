@@ -6,7 +6,7 @@ clear all; clc;
 S = readtable('/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv', 'Delimiter', ',');
 
 path1='/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/analysis/firstlevel/';
-path2='/task/con_0022.nii';
+path2='/task/con_0024.nii';
 
 files = cellfun(@(f) fullfile(path1, f, path2), S.name, 'UniformOutput', false);
 L = logical(S.group);
@@ -15,7 +15,7 @@ sz_scans = files(L); hc_scans = files(~L);
 sz_scans(23) = []; %remove s.kanik for now
 
 % Specify directory for second-level results
-secondLevelDir = './secondlevel/twoSampleT';
+secondLevelDir = './secondlevel/twoSampleT_0024';
 if ~exist(secondLevelDir, 'dir')
     mkdir(secondLevelDir);
 end
