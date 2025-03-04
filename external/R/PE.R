@@ -1,6 +1,8 @@
 # Loading libraries
 library(R.matlab); library(tidyverse)
 setwd("/Users/kaankeskin/projects/sch_pe/")
+# Microsoft
+setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 #
 dat <- readMat("./data/processed/pe_array2.mat")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
@@ -85,3 +87,9 @@ model <- glm(
 )
 
 summary(model)
+
+# Create a 2x2 table for each group
+tables <- by(T_last, T_last$group, function(sub_df) table(sub_df$yatirim, sub_df$rakip))
+
+# Display tables
+tables
