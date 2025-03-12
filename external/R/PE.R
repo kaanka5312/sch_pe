@@ -1,12 +1,13 @@
 # Loading libraries
 library(R.matlab); library(tidyverse)
-setwd("/Users/kaankeskin/projects/sch_pe/")
+#setwd("/Users/kaankeskin/projects/sch_pe/")
 # Microsoft
 setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 #
 dat <- readMat("./data/processed/pe_array2.mat")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
 subj_table <- subset(subj_table, !(subj %in% c(9, 44)))
+
 #dat <- readMat("/Users/kaankeskin/projects/sch_pe/data/processed/normalized_pe_array.mat")
 pe_mat <- dat$merged.matrix[,1:60]
 group <- factor(ifelse(dat$merged.matrix[,61],"sz","hc"))
@@ -70,7 +71,7 @@ T_last$phase <- cut(
 library(lme4)
 
 T_last$yatirim <- factor(T_last$yatirim)
-T_last$rakip <- factor(T_last$rakip)
+#T_last$rakip <- factor(T_last$rakip)
 T_last$group <- factor(T_last$group)
 T_last$phase <- factor(T_last$phase)
 
@@ -89,7 +90,14 @@ model <- glm(
 summary(model)
 
 # Create a 2x2 table for each group
-tables <- by(T_last, T_last$group, function(sub_df) table(sub_df$yatirim, sub_df$rakip))
+tables <- by(T_last, T_last$group, function(sub_df) table(yatirim = sub_df$yatirim, rakip = sub_df$rakip))
 
 # Display tables
 tables
+
+T_last <- T_last %>%
+  arrange(denekId, sayac) %>%  # Ensure data is ordered by subject and trial
+  group_by(denekId) %>%
+  mutate(cum_rakip = cumsum(lag(rakip, default = 0))) %>%  # Cumulative sum of previous rakip values
+  ungroup()
+
