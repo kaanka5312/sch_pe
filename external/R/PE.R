@@ -11,7 +11,8 @@ dat <- list(readMat("./data/processed/pe_array2.mat"), # Cemre RW PE
             readMat("./data/processed/x3_pe_array.mat"), # HGF high level PE
             readMat("./data/processed/alfa2_array.mat"), # learning rate level 2
             readMat("./data/processed/alfa3_array.mat"), # learning rate level 3
-            readMat("./data/processed/rw_pe.mat")) # RW model PE from TAPAS
+            readMat("./data/processed/rw_pe.mat") # RW model PE from TAPAS
+)
 
 subj_table <- read.csv("./data/raw/subjects_list.csv")
 #subj_table <- subset(subj_table, !(subj %in% c(9, 44)))
@@ -87,6 +88,22 @@ summary(posthoc_group_task)
 
 posthoc_task_group <- emmeans(mixed_model, pairwise ~ Task | Group, lmer.df = "satterthwaite")
 summary(posthoc_task_group)
+
+# Poisson regression
+dat <-readMat("./data/processed/p3_pe_discrete.mat")
+dat2=list()
+dat2$merged.matrix = as.matrix(dat$neg.pe)
+dat2_long <- convert_to_long(dat = dat2,subj_table = subj_table)
+
+library(lme4)
+
+# Poisson mixed model with Subject as a random effect
+poisson_model <- glm(PE ~ Group * Task * Sex, 
+                       data = dat2_long, 
+                       family = poisson(link = "log"))
+
+summary(poisson_model)
+
 
 ###############################
 #=#= B E H A V I O R A L=#=#=#=

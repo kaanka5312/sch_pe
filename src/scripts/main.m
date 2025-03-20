@@ -174,14 +174,22 @@ lme_matrix_hc = vertcat(lme_hgf_hc', lme_rw_hc');  % Rows: models, Columns: HC s
 % evidence to choose one another
 %%
 % Assuming 'hgf_results' contains the output from TAPAS HGF
-subject_id = 1;  % Choose a subject to visualize
+load(fullfile(datapath2, 'hgf_struct.mat'))
+subject_id = 10;  % Choose a subject to visualize
 pe_2 = hgfStruct(subject_id).traj.epsi(:,2);  % Second-level PE
 pe_3 = hgfStruct(subject_id).traj.epsi(:,3);  % Third-level PE
+
+q1_1 = prctile(pe_2,20); q2_1 = prctile(pe_2,50); q3_1 = prctile(pe_2,80);
+q1_2 = prctile(pe_3,20); q2_2 = prctile(pe_3,50); q3_2 = prctile(pe_3,80);
 
 % Plot PEs over trials
 figure;
 subplot(2,1,1);
 plot(pe_2, 'r', 'LineWidth', 2);
+hold on
+yline(q1_1,'--b')
+yline(q2_1,'--b')
+yline(q3_1,'--b')
 xlabel('Trial');
 ylabel('PE (Level 2)');
 title('Second-Level PE Trajectory');
@@ -189,7 +197,44 @@ grid on;
 
 subplot(2,1,2);
 plot(pe_3, 'b', 'LineWidth', 2);
+hold on 
+yline(q1_2,'--b')
+yline(q2_2,'--b')
+yline(q3_2,'--b')
 xlabel('Trial');
 ylabel('PE (Level 3)');
 title('Third-Level PE Trajectory');
 grid on;
+
+p2_mat = load('./data/processed/x2_pe_array.mat');
+
+% Get number of subjects and trials
+[num_subjects, num_trials] = size(p2_mat.merged_matrix(:, 1:60));
+
+% Compute percentiles across all trials for each subject
+q1_all = prctile(p2_mat.merged_matrix(:, 1:60), 20, 2); % 20th percentile (negative PE)
+q3_all = prctile(p2_mat.merged_matrix(:, 1:60), 80, 2); % 80th percentile (positive PE)
+
+% Create logical matrices for positive and negative PEs
+pos_pe = p2_mat.merged_matrix(:, 1:60) > q3_all; % Positive PEs
+neg_pe = p2_mat.merged_matrix(:, 1:60) < q1_all; % Negative PEs
+
+pos_pe = [pos_pe, S.group]; neg_pe = [neg_pe, S.group]; 
+save('./data/processed/p2_pe_discrete.mat', 'pos_pe','neg_pe');
+
+% Upper Level
+p3_mat = load('./data/processed/x3_pe_array.mat');
+
+% Get number of subjects and trials
+[num_subjects, num_trials] = size(p3_mat.merged_matrix(:, 1:60));
+
+% Compute percentiles across all trials for each subject
+q1_all = prctile(p3_mat.merged_matrix(:, 1:60), 20, 2); % 20th percentile (negative PE)
+q3_all = prctile(p3_mat.merged_matrix(:, 1:60), 80, 2); % 80th percentile (positive PE)
+
+% Create logical matrices for positive and negative PEs
+pos_pe = p3_mat.merged_matrix(:, 1:60) > q3_all; % Positive PEs
+neg_pe = p3_mat.merged_matrix(:, 1:60) < q1_all; % Negative PEs
+
+pos_pe = [pos_pe, S.group]; neg_pe = [neg_pe, S.group]; 
+save('./data/processed/p3_pe_discrete.mat', 'pos_pe','neg_pe');
