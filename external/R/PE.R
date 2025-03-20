@@ -113,7 +113,7 @@ T_last$phase <- cut(
 library(lme4)
 
 T_last$yatirim <- factor(T_last$yatirim)
-T_last$rakip <- factor(T_last$rakip)
+#T_last$rakip <- factor(T_last$rakip)
 T_last$group <- factor(T_last$group)
 T_last$phase <- factor(T_last$phase)
 
@@ -121,7 +121,7 @@ T_last$phase <- factor(T_last$phase)
 # DO NOT FORGET ! THIS DOESNT CONSIDERED THE REPEATED MEASURE DESIGN SO CONTINUE
 # TO GLM MODEL
 # Create a 2x2 table for each group
-tables <- by(T_last, T_last$group, function(sub_df) table(sub_df$yatirim, sub_df$rakip))
+tables <- by(T_last, T_last$group, function(sub_df) table(yatirim = sub_df$yatirim, rakip = sub_df$rakip))
 
 # Display tables
 tables
