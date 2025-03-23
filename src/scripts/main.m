@@ -106,15 +106,14 @@ for i = 1:numel(spm_pe)
     writematrix(data3, filename4);
 end
 %% Saving PE arrays for comparison and compare in R 
-group = vertcat(S.group,zeros(31,1)) ;
 % Extract second column and convert to matrix
 merged_matrix = cell2mat(cellfun(@(x) x(:,1)', pe_array, 'UniformOutput', false));
-merged_matrix = [merged_matrix, group];
+merged_matrix = [merged_matrix, S.group];
 save('./data/processed/pe_array2.mat', 'merged_matrix');
 
 merged_matrix = cell2mat(cellfun(@(x) x(:,2)', normalized_pe_array, 'UniformOutput', false));
-merged_matrix = [merged_matrix, group];
-save('./data/processed/normalized_pe_array.mat', 'merged_matrix');
+merged_matrix = [merged_matrix, S.group];
+save('./data/processed/normalized_pe_array2.mat', 'merged_matrix');
 
 %%
 % Apply HGF to all subjects and add subject IDs
@@ -122,7 +121,7 @@ hgfStruct = arrayfun(@(s) setfield(hgf_apply_binary(T, s, false), 'subjectID', s
 save(fullfile(datapath2, 'hgf_struct.mat'), 'hgfStruct');
 
 rwStruct = arrayfun(@(s) setfield(rw_apply_binary(T, s, false), 'subjectID', s), subjects);
-save(fullfile(datapath2, 'rw_struct.mat'), 'hgfStruct');
+save(fullfile(datapath2, 'rw_struct.mat'), 'rwStruct');
 
 % Define trajectory fields to extract and corresponding filenames
 traj_fields = {'epsi', 'epsi', 'wt', 'wt', 'mu', 'mu'};
@@ -176,27 +175,28 @@ for i = 1:length(traj_fields)
 end
 
 %%
-% Model evidences for either HGF or RW
+load(fullfile(datapath2, 'hgf_struct.mat'));
+load(fullfile(datapath2, 'rw_struct.mat'));
+
+% Model evidences
 lme_hgf = arrayfun(@(x) x.optim.LME, hgfStruct);
-lme_rw = arrayfun(@(x) x.optim.LME, rwStruct);
+lme_rw  = arrayfun(@(x) x.optim.LME, rwStruct);
 
 % Group labels (1 = SZ, 0 = HC)
-group_labels = group;  % Assuming subjects.group exists
+group_labels = S.group;
 
-% Extract LMEs for each group
-lme_hgf_sz = lme_hgf(group_labels == 1);  
-lme_rw_sz  = lme_rw(group_labels == 1);  
-lme_hgf_hc = lme_hgf(group_labels == 0);  
-lme_rw_hc  = lme_rw(group_labels == 0);  
+% Separate by group
+lme_hgf_sz = lme_hgf(group_labels == 1);
+lme_rw_sz  = lme_rw(group_labels == 1);
+lme_hgf_hc = lme_hgf(group_labels == 0);
+lme_rw_hc  = lme_rw(group_labels == 0);
 
-% Combine into matrices for Bayesian Model Selection
-lme_matrix_sz = vertcat(lme_hgf_sz',lme_rw_sz');  % Rows: models, Columns: SZ subjects
-lme_matrix_hc = vertcat(lme_hgf_hc', lme_rw_hc');  % Rows: models, Columns: HC subjects
+% Combine: subjects × models
+lme_matrix_sz = [lme_hgf_sz(:), lme_rw_sz(:)];
+lme_matrix_hc = [lme_hgf_hc(:), lme_rw_hc(:)];
 
-% Run BMS for SZ group
+% Run BMS
 [alpha_sz, exp_r_sz, xp_sz, pxp_sz, bor_sz] = spm_BMS(lme_matrix_sz);
-
-% Run BMS for HC group
 [alpha_hc, exp_r_hc, xp_hc, pxp_hc, bor_hc] = spm_BMS(lme_matrix_hc);
 
 % Model evidences suggest that (both xp and bor) there is no favorouble 

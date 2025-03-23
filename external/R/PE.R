@@ -2,9 +2,9 @@
 library(R.matlab); library(tidyverse); library(reshape2)
 setwd("/Users/kaankeskin/projects/sch_pe/")
 # Microsoft
-setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 #
-dat <- list(readMat("./data/processed/pe_array2.mat"), # Cemre RW PE
+dat <- list(readMat("./data/processed/normalized_pe_array2.mat"), # Cemre RW PE
             readMat("./data/processed/x2_array.mat"), # HGF X2
             readMat("./data/processed/x3_array.mat"), # HGF X3
             readMat("./data/processed/x2_pe_array.mat"), # HGF low level PE
@@ -72,7 +72,7 @@ model_results <- lapply(long_pe_list[c(4:5,8)], function(df) {
 lapply(model_results, summary)
 
 # Gamma modelling is more appropriate due to skewed nature of the data
-long_pe_list[[1]]$PE_shifted <- long_pe_list[[1]]$PE + abs(min(long_pe_list[[1]]$PE)) + 0.01
+long_pe_list[[1]]$PE_shifted <- long_pe_list[[1]]$PE + abs(min(long_pe_list[[1]]$PE)) + 0.25
 
 library(lme4)
 gamma_model <- glmer(PE_shifted ~ Group + Task + (1 | Subject), 
