@@ -1,9 +1,9 @@
-function [new_arr] = spm_pe_regressor(pe_array)
+function [new_arr] = spm_pe_regressor(pe_array,index,frame)
 
-PEnor = pe_array(:,2);
+PEnor = pe_array(:,index);
 
 game =zeros(60,8); %oyun matrisi olustur, her bir kolon bir ekran, decision ve jitter-fixatition icin 2ser ekran toplam 8
-game (:, 4) = PEnor; %normalize edilmis degerleri response kolonuna yerle?tir
+game (:, frame) = PEnor; %normalize edilmis degerleri response kolonuna yerle?tir
 
 B = game'; %converts matrix to an array 480x1
 B = B(:)'; %index yerlerinde PE degerleri olacak, geri kalanlar? 0

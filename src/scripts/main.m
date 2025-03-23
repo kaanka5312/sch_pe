@@ -41,7 +41,6 @@ T(:,1) = []; % Removes first column that is unneeded id
 %     120,121,124,126,132,134,135];
 
 subjects = S.task_id;
-subjects = vertcat(subjects,unique(filtered_T.denekId));
 
 ansStruct = arrayfun(@(s) setfield(income_pred(T, s), 'subjectID', s), subjects);
 save(fullfile( datapath2 ,'income_pred.mat'),'ansStruct');
@@ -50,7 +49,7 @@ pe_array = arrayfun(@(x) calculatePE(x), ansStruct, 'UniformOutput', false);
 
 normalized_pe_array = cellfun(@(x) normalization(x),pe_array,'UniformOutput',false);
 
-spm_pe = cellfun(@(x) spm_pe_regressor(x),normalized_pe_array,'UniformOutput',false);
+spm_pe = cellfun(@(x) spm_pe_regressor(x,2,5),normalized_pe_array,'UniformOutput',false); % 4= anticipation, 5=response
 
 % Dividing pe to session in task 
 % 167. Start of ses-2 
@@ -59,21 +58,52 @@ pe_1 = cellfun(@(x) setZeroExcept(x, 1:166), spm_pe, 'UniformOutput', false);
 pe_2 = cellfun(@(x) setZeroExcept(x, 167:332), spm_pe, 'UniformOutput', false);
 pe_3 = cellfun(@(x) setZeroExcept(x, 333:498), spm_pe, 'UniformOutput', false);
 
+% For modulator analysis only saving the PE's per subject
+% Saving to the folders
+for i = 1: size(normalized_pe_array,1)
+    
+    % Build the destination folder path
+    destFolder = fullfile('/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized', S.name{i}, 'functional', 'task');
+    
+    % Create the folder if it doesn't exist
+    if ~exist(destFolder, 'dir')
+        mkdir(destFolder);
+    end
+
+    % Create full file names within the destination folder
+    filename1 = fullfile(destFolder, 'pe_all_modulator.txt');
+
+    % Write the data to the .txt files
+    writematrix(normalized_pe_array{i}(:,2), filename1);
+    
+end
 %% Saving pe as regressor for SPM
 for i = 1:numel(spm_pe)
     % Extract the numeric data from the i-th cell
-    data = spm_pe{i};  % data is 498x1 double
-    data1 = pe_1{i};  % data is 498x1 double
-    data2 = pe_2{i};  % data is 498x1 double
-    data3 = pe_3{i};  % data is 498x1 double
+    data  = spm_pe{i};   % 498x1 double
+    data1 = pe_1{i};     % 498x1 double
+    data2 = pe_2{i};     % 498x1 double
+    data3 = pe_3{i};     % 498x1 double
 
-    % Create a filename. For instance: 'Cell1.txt', 'Cell2.txt', ...
-    filename1 = sprintf(['/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized/' S.name{i} '/functional/task/pe_all.txt']);
-    filename2 = sprintf(['/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized/' S.name{i} '/functional/task/pe_1.txt']);
-    filename3 = sprintf(['/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized/' S.name{i} '/functional/task/pe_2.txt']);
-    filename4 = sprintf(['/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized/' S.name{i} '/functional/task/pe_3.txt']);
-    % Write to a .txt file
-    writematrix(data, filename1); writematrix(data1, filename2); writematrix(data2, filename3); writematrix(data3, filename4);
+    % Build the destination folder path
+    destFolder = fullfile('/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized', S.name{i}, 'functional', 'task');
+    
+    % Create the folder if it doesn't exist
+    if ~exist(destFolder, 'dir')
+        mkdir(destFolder);
+    end
+
+    % Create full file names within the destination folder
+    filename1 = fullfile(destFolder, 'pe_all.txt');
+    filename2 = fullfile(destFolder, 'pe_1.txt');
+    filename3 = fullfile(destFolder, 'pe_2.txt');
+    filename4 = fullfile(destFolder, 'pe_3.txt');
+
+    % Write the data to the .txt files
+    writematrix(data,  filename1);
+    writematrix(data1, filename2);
+    writematrix(data2, filename3);
+    writematrix(data3, filename4);
 end
 %% Saving PE arrays for comparison and compare in R 
 group = vertcat(S.group,zeros(31,1)) ;
@@ -238,3 +268,94 @@ neg_pe = p3_mat.merged_matrix(:, 1:60) < q1_all; % Negative PEs
 
 pos_pe = [pos_pe, S.group]; neg_pe = [neg_pe, S.group]; 
 save('./data/processed/p3_pe_discrete.mat', 'pos_pe','neg_pe');
+
+%% 
+% Saving HGF PE to test with SPM 
+% Lower level PE 
+load ./data/processed/x2_pe_array.mat
+spm_pe_2 = merged_matrix(:,1:60);
+
+% Assume pe_matrix is an 82x60 matrix where each column is a spm_pe vector.
+pe_matrix = spm_pe_2'; 
+
+nSubs = size(pe_matrix, 2); 
+processedCell = cell(1, nSubs);  % preallocate a cell array to hold processed output
+
+for i = 1:nSubs
+    % Apply your spm_pe_regressor function to each column
+    processedCell{i} = spm_pe_regressor(pe_matrix(:, i),1,5); % 4= anticipation, 5=response
+end
+
+% If all outputs are the same length (e.g., 498x1) and you want a numeric matrix,
+% you can convert the cell array to a matrix. This will produce a 498x60 matrix.
+processedMatrix = cell2mat(processedCell);
+
+
+% Dividing pe to session in task 
+% 167. Start of ses-2 
+% 333. Start of ses-3
+pe_1_1 = arrayfun(@(i) setZeroExcept(processedMatrix(:,i), 1:166), 1:size(processedMatrix,2), 'UniformOutput', false);
+pe_1_2 = arrayfun(@(i) setZeroExcept(processedMatrix(:,i), 167:332), 1:size(processedMatrix,2), 'UniformOutput', false);
+pe_1_3 = arrayfun(@(i) setZeroExcept(processedMatrix(:,i), 333:498), 1:size(processedMatrix,2), 'UniformOutput', false);
+pe_1_all = arrayfun(@(i) processedMatrix(:,i), 1:size(processedMatrix,2), 'UniformOutput', false);
+
+% Upper Level PE
+load ./data/processed/x3_pe_array.mat
+spm_pe_3 = merged_matrix(:,1:60);
+
+% Assume pe_matrix is an 82x60 matrix where each column is a spm_pe vector.
+pe_matrix = spm_pe_3'; 
+
+nSubs = size(pe_matrix, 2); 
+processedCell = cell(1, nSubs);  % preallocate a cell array to hold processed output
+
+for i = 1:nSubs
+    % Apply your spm_pe_regressor function to each column
+    processedCell{i} = spm_pe_regressor(pe_matrix(:, i),1,5); % 4= anticipation, 5=response
+end
+
+% If all outputs are the same length (e.g., 498x1) and you want a numeric matrix,
+% you can convert the cell array to a matrix. This will produce a 498x60 matrix.
+processedMatrix = cell2mat(processedCell);
+
+pe_2_1 = arrayfun(@(i) setZeroExcept(processedMatrix(:,i), 1:166), 1:size(processedMatrix,2), 'UniformOutput', false);
+pe_2_2 = arrayfun(@(i) setZeroExcept(processedMatrix(:,i), 167:332), 1:size(processedMatrix,2), 'UniformOutput', false);
+pe_2_3 = arrayfun(@(i) setZeroExcept(processedMatrix(:,i), 333:498), 1:size(processedMatrix,2), 'UniformOutput', false);
+pe_2_all = arrayfun(@(i) processedMatrix(:,i), 1:size(processedMatrix,2), 'UniformOutput', false);
+
+% Saving to the folders
+for i = 1: size(processedMatrix,2)
+    
+    % Build the destination folder path
+    destFolder = fullfile('/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/data/data_organized', S.name{i}, 'functional', 'task');
+    
+    % Create the folder if it doesn't exist
+    if ~exist(destFolder, 'dir')
+        mkdir(destFolder);
+    end
+
+    % Create full file names within the destination folder
+    filename1 = fullfile(destFolder, 'pe_1_1.txt');
+    filename2 = fullfile(destFolder, 'pe_1_2.txt');
+    filename3 = fullfile(destFolder, 'pe_1_3.txt');
+    filename4 = fullfile(destFolder, 'pe_2_1.txt');
+    filename5 = fullfile(destFolder, 'pe_2_2.txt');
+    filename6 = fullfile(destFolder, 'pe_2_3.txt');
+    filename7 = fullfile(destFolder, 'pe_1_all.txt');
+    filename8 = fullfile(destFolder, 'pe_2_all.txt');
+
+    % Write the data to the .txt files
+    writematrix(pe_1_1{i}, filename1);
+    writematrix(pe_1_2{i}, filename2);
+    writematrix(pe_1_3{i}, filename3);
+    writematrix(pe_2_1{i}, filename4);
+    writematrix(pe_2_2{i}, filename5);
+    writematrix(pe_2_3{i}, filename6);
+    writematrix(spm_pe_2(i,:)', filename7);
+    writematrix(spm_pe_3(i,:)', filename8);
+    
+end
+
+% FOR RESPONSE ONSET
+%onset = find(processedMatrix(:,1) ~= 0);
+%writematrix(onset,'/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/codes/onset.txt')
