@@ -81,6 +81,49 @@ gamma_model <- glmer(PE_shifted ~ Group + Task + (1 | Subject),
                      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e5)))
 summary(gamma_model)
 
+# For the publication, we will use the gamma distribution
+# Log-normal as alternative
+long_pe_list[[1]]$logPE <- log(long_pe_list[[1]]$PE_shifted)
+
+lognormal_model <- lmer(logPE ~ Group * Task * (1 | Subject), data = long_pe_list[[1]])
+
+# Check Distribition of dependent variable ####
+# Histogram
+hist(long_pe_list[[1]]$PE_shifted, breaks = 30, main = "Histogram of PE_shifted", xlab = "PE_shifted")
+
+# Q-Q plot (log-transformed, optional)
+qqnorm(log(long_pe_list[[1]]$PE_shifted), main = "Q-Q Plot of log(PE_shifted)")
+qqline(log(long_pe_list[[1]]$PE_shifted))
+
+#### Justify Random Effects (ICC and LRT) ####
+# You want to assess whether adding a random intercept for 
+# Subject significantly improves model fit. If Pr(>Chi) is significant 
+# (typically p < 0.05), then including random effects is justified. 
+# This means there's substantial between-subject variability 
+# in PE_shifted not captured by the fixed effects alone.
+
+
+# Model without random intercept (fixed effects only)
+model_fixed <- glm(logPE ~ Group + Task , 
+                   data = long_pe_list[[1]])
+# Model with random intercept (your full model)
+model_random <- lmer(logPE ~ Group + Task + (1 | Subject), 
+                     data = long_pe_list[[1]])
+
+# Compare the two models
+anova(model_fixed, model_random, test = "Chisq")
+
+### Model Diagnostics ####
+library(DHARMa)
+
+# Simulate residuals
+sim_res <- simulateResiduals(lognormal_model)
+
+# Plot residual diagnostics
+plot(sim_res)
+
+
+
 # Estimated Marginal Means (EMMs) for Task within each Group
 # Pairwise comparisons for Group differences in each Task
 posthoc_group_task <- emmeans(mixed_model, pairwise ~ Group | Task, lmer.df = "satterthwaite",adjust = "bonferroni")
@@ -144,7 +187,7 @@ tables <- by(T_last, T_last$group, function(sub_df) table(yatirim = sub_df$yatir
 tables
 
 # Addition of the interaction doesn't improve the model
-model_simple <- glmer(yatirim ~ group + phase + (1 | denekId), 
+model_simple <- glmer(yatirim ~ group * phase * (1 | denekId), 
                       data = T_last, 
                       family = binomial(link = "logit"))
 
@@ -174,6 +217,29 @@ group_change_summary <- subject_phase_summary %>%
 
 print(group_change_summary)
 
+#### FIGURES ######
+library(broom.mixed)
+library(ggplot2)
 
-plot(density(long_pe_list[[4]]$PE))
-max(long_pe_list[[4]]$PE)
+# Custom labels (optional)
+labels <- c(
+  "group1" = "SZ vs. HC",
+  "phase2" = "Phase 2 vs. Phase 1",
+  "phase3" = "Phase 3 vs. Phase 1",
+  "group1:phase2" = "Group x Phase 2",
+  "group1:phase3" = "Group x Phase 3"
+)
+
+# Run the function on your model
+plot_odds_ratios(model_simple, custom_labels = labels, TITLE=" (Binomial GLMM)")
+
+labels <- c(
+  "Groupsz" = "SZ vs. HC",
+  "Task2" = "Phase 2 vs. Phase 1",
+  "Task3" = "Phase 3 vs. Phase 1",
+  "Groupsz:Task2" = "Group x Phase 2",
+  "Groupsz:Task3" = "Group x Phase 3"
+)
+
+plot_prediction_effects(lognormal_model,custom_labels = labels,TITLE = " (LogNormal GLMM)")
+
