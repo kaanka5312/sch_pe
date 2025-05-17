@@ -1,8 +1,8 @@
 # Loading libraries
 library(R.matlab); library(tidyverse); library(reshape2)
-setwd("/Users/kaankeskin/projects/sch_pe/")
+#setwd("/Users/kaankeskin/projects/sch_pe/")
 # Microsoft
-#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 #
 dat <- list(readMat("./data/processed/normalized_pe_array2.mat"), # Cemre RW PE
             readMat("./data/processed/x2_array.mat"), # HGF X2
