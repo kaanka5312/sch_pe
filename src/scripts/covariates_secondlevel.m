@@ -4,7 +4,7 @@
 clear all; clc;
 S = readtable('/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv', 'Delimiter', ',');
 path1='/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/analysis/firstlevel/';
-contrasts = arrayfun(@num2str, 27:28, 'UniformOutput', false);
+contrasts = arrayfun(@num2str, 30, 'UniformOutput', false);
 
 for cont = 1:numel(contrasts)
     path2=['/task/con_00' contrasts{cont} '.nii'];
@@ -37,28 +37,14 @@ for cont = 1:numel(contrasts)
     
     % Remove s.kanik and ecemyilmaz (indices 23 and 43)
     exclude_idx = [9, 18, 44, 39];
-    cov_age(exclude_idx) = [];
     cov_sex(exclude_idx) = [];
-    cov_doi(exclude_idx) = [];
 
-    % Add covariates: Age
-    matlabbatch{1}.spm.stats.factorial_design.cov(1).c = cov_age;
-    matlabbatch{1}.spm.stats.factorial_design.cov(1).cname = 'Age';
+    % Sex
+    matlabbatch{1}.spm.stats.factorial_design.cov(1).c = cov_sex;
+    matlabbatch{1}.spm.stats.factorial_design.cov(1).cname = 'Sex';
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCFI = 1;
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCC = 1;
-    
-    % Sex
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).c = cov_sex;
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).cname = 'Sex';
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).iCFI = 1;
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).iCC = 1;
-    
-    % Duration of Illness
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).c = cov_doi;
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).cname = 'DoI';
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).iCFI = 1;
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).iCC = 1;
-    
+   
     
     % (Optional) Equal/unequal variance assumption
     % By default, SPM uses unequal variance (var_equal = 0).
@@ -94,24 +80,18 @@ for cont = 1:numel(contrasts)
     %matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFT', {}, 'iCC', {});
     
     % Covariates
-    cov_age = double(S.age);
     cov_sex = double(S.sex);
     
     
     % Extract HC-only covariates (remove index 43)
-    hc_cov_age = cov_age(~L); hc_cov_age([18, 43]) = [];
+    %hc_cov_age = cov_age(~L); hc_cov_age([18, 43]) = [];
     hc_cov_sex = cov_sex(~L); hc_cov_sex([18, 43]) = [];
     
-    matlabbatch{1}.spm.stats.factorial_design.cov(1).c = hc_cov_age;
-    matlabbatch{1}.spm.stats.factorial_design.cov(1).cname = 'Age';
+    matlabbatch{1}.spm.stats.factorial_design.cov(1).c = hc_cov_sex;
+    matlabbatch{1}.spm.stats.factorial_design.cov(1).cname = 'Sex';
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCFT = 1;
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCC = 1;
     
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).c = hc_cov_sex;
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).cname = 'Sex';
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).iCFT = 1;
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).iCC = 1;
- 
     
     matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
     matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
@@ -136,28 +116,22 @@ for cont = 1:numel(contrasts)
     %matlabbatch{1}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'iCFT', {}, 'iCC', {});
     
     % Extract SZ-only covariates
-    cov_age = double(S.age);
     cov_sex = double(S.sex);
     cov_doi = double(S.DoI);
 
-    sz_cov_age = cov_age(L); sz_cov_age([2,23]) = [];
     sz_cov_sex = cov_sex(L); sz_cov_sex([2,23]) = [];
     sz_cov_doi = cov_doi(L); sz_cov_doi([2,23]) = [];
     
-    matlabbatch{1}.spm.stats.factorial_design.cov(1).c = sz_cov_age;
-    matlabbatch{1}.spm.stats.factorial_design.cov(1).cname = 'Age';
+   
+    matlabbatch{1}.spm.stats.factorial_design.cov(1).c = sz_cov_sex;
+    matlabbatch{1}.spm.stats.factorial_design.cov(1).cname = 'Sex';
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCFT = 1;
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCC = 1;
     
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).c = sz_cov_sex;
-    matlabbatch{1}.spm.stats.factorial_design.cov(2).cname = 'Sex';
+    matlabbatch{1}.spm.stats.factorial_design.cov(2).c = sz_cov_doi;
+    matlabbatch{1}.spm.stats.factorial_design.cov(2).cname = 'DoI';
     matlabbatch{1}.spm.stats.factorial_design.cov(2).iCFT = 1;
     matlabbatch{1}.spm.stats.factorial_design.cov(2).iCC = 1;
-    
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).c = sz_cov_doi;
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).cname = 'DoI';
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).iCFT = 1;
-    matlabbatch{1}.spm.stats.factorial_design.cov(3).iCC = 1;
         
     matlabbatch{1}.spm.stats.factorial_design.masking.tm.tm_none = 1;
     matlabbatch{1}.spm.stats.factorial_design.globalc.g_omit = 1;
