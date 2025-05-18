@@ -15,15 +15,19 @@ dat <- list(readMat("./data/processed/normalized_pe_array2.mat"), # Cemre RW PE
 )
 
 subj_table <- read.csv("./data/raw/subjects_list.csv")
-#subj_table <- subset(subj_table, !(subj %in% c(9, 44)))
+subj_table <- subset(subj_table, !(subj %in% c(9, 44)))
 #dat <- readMat("/Users/kaankeskin/projects/sch_pe/data/processed/normalized_pe_array.mat")
 
-convert_to_long <- function(dat, subj_table) {
+convert_to_long <- function(dat, subj_table, exclude=TRUE) {
   # Extract PE matrix (first 60 columns) and group information (column 61)
+  if (exclude) dat$merged.matrix <- dat$merged.matrix[-c(9, 44), ]
+  
   pe_mat <- dat$merged.matrix[,1:60]
   group <- factor(ifelse(dat$merged.matrix[,61], "sz", "hc"))
   task <- factor(rep(1:3, each = 20))  # Assuming 3 tasks with 20 trials each
   sex <- factor(ifelse(subj_table$sex, "M", "F"))
+  age <- as.numeric(subj_table$age)
+  doi <- as.numeric(subj_table$DoI)
   
   # Convert PE matrix to a data frame
   pe_df <- as.data.frame(pe_mat)
@@ -45,6 +49,13 @@ convert_to_long <- function(dat, subj_table) {
   
   # Add Sex information (repeat for each trial)
   long_pe$Sex <- rep(sex, each = ncol(pe_mat))
+  
+  # Add Age information (repeat for each trial)
+  long_pe$Age <- rep(age, each = ncol(pe_mat)) 
+  
+  # Add DoI information (repeat for each trial)
+  long_pe$DoI <- rep(doi, each = ncol(pe_mat)) 
+  
   
   return(long_pe)
 }
@@ -85,8 +96,9 @@ summary(gamma_model)
 # Log-normal as alternative
 long_pe_list[[1]]$logPE <- log(long_pe_list[[1]]$PE_shifted)
 
-lognormal_model <- lmer(logPE ~ Group * Task * (1 | Subject), data = long_pe_list[[1]])
+lognormal_model <- lmer(logPE ~ Group * Sex + Task + (1 | Subject) + DoI, data = long_pe_list[[1]])
 
+summary(lognormal_model)
 # Check Distribition of dependent variable ####
 # Histogram
 hist(long_pe_list[[1]]$PE_shifted, breaks = 30, main = "Histogram of PE_shifted", xlab = "PE_shifted")
@@ -122,6 +134,13 @@ sim_res <- simulateResiduals(lognormal_model)
 # Plot residual diagnostics
 plot(sim_res)
 
+#### Checking model multicollinearity
+library(car)
+vif(lognormal_model)
+
+### ICC 
+library(performance)
+icc(lognormal_model)
 
 
 # Estimated Marginal Means (EMMs) for Task within each Group
@@ -162,6 +181,10 @@ T <- rbind(T,T_aslihan)
 #sum(T$sayac==59) 
 T_last <- T[,c(2,3,4,5)]
 T_last$group <- rep(subj_table$group,each=60)
+T_last$sex <- rep(subj_table$sex,each=60)
+T_last$age <- rep(as.numeric(subj_table$age),each=60)
+T_last$doi <- rep(as.numeric(subj_table$DoI),each=60)
+
 
 T_last$phase <- cut(
   T_last$sayac,
@@ -187,12 +210,28 @@ tables <- by(T_last, T_last$group, function(sub_df) table(yatirim = sub_df$yatir
 tables
 
 # Addition of the interaction doesn't improve the model
-model_simple <- glmer(yatirim ~ group * phase * (1 | denekId), 
+model_simple <- glmer(yatirim ~ group + phase + sex +  (1 | denekId) + doi, 
                       data = T_last, 
                       family = binomial(link = "logit"))
 
 summary(model_simple)
 
+### Model Diagnostics ####
+library(DHARMa)
+
+# Simulate residuals
+sim_res <- simulateResiduals(model_simple)
+
+# Plot residual diagnostics
+plot(sim_res)
+
+#### Checking model multicollinearity
+library(car)
+vif(model_simple)
+
+### ICC 
+library(performance)
+icc(model_simple)
 
 #### THIS PART IS TO CHECK IF CHANGING BEHAVIOUR EXISTS FOR THE SZ GROUP####
 # Summarize investment behavior for each subject in each phase
@@ -227,19 +266,27 @@ labels <- c(
   "phase2" = "Phase 2 vs. Phase 1",
   "phase3" = "Phase 3 vs. Phase 1",
   "group1:phase2" = "Group x Phase 2",
-  "group1:phase3" = "Group x Phase 3"
+  "group1:phase3" = "Group x Phase 3",
+  "sex" = "Sex",
+  "doi" = "Illness Duration"
 )
 
 # Run the function on your model
 plot_odds_ratios(model_simple, custom_labels = labels, TITLE=" (Binomial GLMM)")
+
+
 
 labels <- c(
   "Groupsz" = "SZ vs. HC",
   "Task2" = "Phase 2 vs. Phase 1",
   "Task3" = "Phase 3 vs. Phase 1",
   "Groupsz:Task2" = "Group x Phase 2",
-  "Groupsz:Task3" = "Group x Phase 3"
+  "Groupsz:Task3" = "Group x Phase 3",
+  "SexM" = "M vs. F",
+  "Groupsz:SexM" = "Group x Sex",
+  "DoI" = "Illness Duration"
 )
 
 plot_prediction_effects(lognormal_model,custom_labels = labels,TITLE = " (LogNormal GLMM)")
+
 
