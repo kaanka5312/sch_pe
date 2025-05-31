@@ -38,6 +38,7 @@ for cont = 1:numel(contrasts)
     % Remove s.kanik and ecemyilmaz (indices 23 and 43)
     exclude_idx = [9, 18, 44, 39];
     cov_sex(exclude_idx) = [];
+    %cov_doi(exclude_idx) = [];
 
     % Sex
     matlabbatch{1}.spm.stats.factorial_design.cov(1).c = cov_sex;
@@ -45,6 +46,11 @@ for cont = 1:numel(contrasts)
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCFI = 1;
     matlabbatch{1}.spm.stats.factorial_design.cov(1).iCC = 1;
    
+    % DoI
+    %matlabbatch{1}.spm.stats.factorial_design.cov(2).c = cov_doi;
+    %matlabbatch{1}.spm.stats.factorial_design.cov(2).cname = 'DOI';
+    %matlabbatch{1}.spm.stats.factorial_design.cov(2).iCFI = 1;
+    %matlabbatch{1}.spm.stats.factorial_design.cov(2).iCC = 1;
     
     % (Optional) Equal/unequal variance assumption
     % By default, SPM uses unequal variance (var_equal = 0).
