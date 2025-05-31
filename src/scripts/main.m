@@ -1,10 +1,10 @@
 currentdir = pwd;
 
 % Windows 
-%datadir = ([currentdir '\data\']);
-%dirlist = dir(datadir);
-%datapath2 = ([currentdir '\results\models\']);
-%addpath([currentdir '\src\functions\'])
+datadir = ([currentdir '\data\']);
+dirlist = dir(datadir);
+datapath2 = ([currentdir '\results\models\']);
+addpath([currentdir '\src\functions\'])
 
 %datapath3 = ([currentdir '\graphics\']);
 
@@ -46,9 +46,11 @@ ansStruct = arrayfun(@(s) setfield(income_pred(T, s), 'subjectID', s), subjects)
 save(fullfile( datapath2 ,'income_pred.mat'),'ansStruct');
 
 pe_array = arrayfun(@(x) calculatePE(x), ansStruct, 'UniformOutput', false);
+alpha_array = arrayfun(@(x) calculateAlpha(x), ansStruct, 'UniformOutput', false);
+alpha_matrix = cell2mat(alpha_array')';  % transpose first to align as columns
+save(fullfile( datapath2 ,'alpha_matrix.mat'),'alpha_matrix');
 
 normalized_pe_array = cellfun(@(x) normalization(x),pe_array,'UniformOutput',false);
-
 spm_pe = cellfun(@(x) spm_pe_regressor(x,2,5),normalized_pe_array,'UniformOutput',false); % 4= anticipation, 5=response
 
 % Dividing pe to session in task 
