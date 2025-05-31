@@ -5,7 +5,12 @@ library(tidyverse); library(reshape2)
 # Microsoft
 
 # Data Preparation 
+# Microsoft
 setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+
+# MacOS
+setwd("/Users/kaankeskin/projects/sch_pe/")
+
 alpha_mat <- readMat("./results/models/alpha_matrix.mat")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
 subj_table <- subset(subj_table, !(subj %in% c(9, 44)))
@@ -72,3 +77,40 @@ fit <- brm(
   cores = 4,
   iter = 2000
 )
+
+# Frequentist statistics 
+library(glmmTMB)
+
+# Ensure PE is strictly between 0 and 1
+alpha_long$PE <- pmin(pmax(alpha_long$PE, 1e-6), 1 - 1e-6)
+# Avoid 0 or 1 exactly
+alpha_long$PE_adj <- pmin(pmax(alpha_long$PE, 1e-6), 1 - 1e-6)
+
+# Convert Group and Task to factors if not already
+alpha_long$Group <- factor(alpha_long$Group, labels = c("HC", "SZ"))
+alpha_long$Task <- factor(alpha_long$Task)
+
+# Fit the Beta model
+fit_glmm <- glmmTMB(
+  PE ~ Task + Group * Sex + DoI + (1 | Subject),
+  data = alpha_long,
+  family = gaussian(link = "logit")
+)
+
+summary(fit_glmm)
+
+### Model Diagnostics ####
+library(DHARMa)
+
+# Simulate residuals
+sim_res <- simulateResiduals(fit_glmm)
+
+# Plot residual diagnostics
+plot(sim_res)
+
+library(performance)
+icc(fit_glmm)
+
+#### Checking model multicollinearity
+library(car)
+vif(fit_glmm)
