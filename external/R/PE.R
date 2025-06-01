@@ -95,8 +95,10 @@ summary(gamma_model)
 # For the publication, we will use the gamma distribution
 # Log-normal as alternative
 long_pe_list[[1]]$logPE <- log(long_pe_list[[1]]$PE_shifted)
+alpha_long$DoI_z <- scale(alpha_long$DoI)  # mean=0, sd=1
+long_pe_list[[1]]$DoI_z <- scale(long_pe_list[[1]]$DoI)
 
-lognormal_model <- lmer(logPE ~ Group * Sex + Task + (1 | Subject) + DoI, data = long_pe_list[[1]])
+lognormal_model <- glmmTMB(logPE ~ Group * Sex + Task + (1 | Subject) + DoI_z, data = long_pe_list[[1]])
 
 summary(lognormal_model)
 # Check Distribition of dependent variable ####
@@ -288,5 +290,20 @@ labels <- c(
 )
 
 plot_prediction_effects(lognormal_model,custom_labels = labels,TITLE = " (LogNormal GLMM)")
+
+custom_labels <- c(
+  "GroupSZ" = "SZ vs. HC",
+  "Task2" = "Phase 2 vs. Phase 1",
+  "Task3" = "Phase 3 vs. Phase 1",
+  "SexM" = "M vs. F",
+  "GroupSZ:SexM" = "Group x Sex",
+  "DoI_z" = "Illness Duration"
+)
+
+plot_prediction_effects(fit_glmm, exclude_intercept = TRUE, custom_labels = custom_labels, 
+                        TITLE = "Learning Rate Effects with 95% CI (Logit Gaussian GLMM)",
+                        XLAB = "Multiplicative Effect on Raw Learning Rate")
+
+
 
 

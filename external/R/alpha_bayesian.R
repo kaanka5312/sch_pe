@@ -80,6 +80,7 @@ fit <- brm(
 
 # Frequentist statistics 
 library(glmmTMB)
+library(lme4)
 
 # Ensure PE is strictly between 0 and 1
 alpha_long$PE <- pmin(pmax(alpha_long$PE, 1e-6), 1 - 1e-6)
@@ -89,10 +90,11 @@ alpha_long$PE_adj <- pmin(pmax(alpha_long$PE, 1e-6), 1 - 1e-6)
 # Convert Group and Task to factors if not already
 alpha_long$Group <- factor(alpha_long$Group, labels = c("HC", "SZ"))
 alpha_long$Task <- factor(alpha_long$Task)
+alpha_long$DoI_z <- scale(alpha_long$DoI)  # mean=0, sd=1
 
 # Fit the Beta model
 fit_glmm <- glmmTMB(
-  PE ~ Task + Group * Sex + DoI + (1 | Subject),
+  PE ~ Task + Group * Sex + DoI_z + (1 | Subject),
   data = alpha_long,
   family = gaussian(link = "logit")
 )
@@ -111,6 +113,10 @@ plot(sim_res)
 library(performance)
 icc(fit_glmm)
 
-#### Checking model multicollinearity
+#### Checking model multicollinearity of fixed predictors 
+# glmmTMB stores this in a compiled C++ object that car::vif() cannot parse.
 library(car)
-vif(fit_glmm)
+fixed_model <- lm(PE ~ Task + Group * Sex + DoI_z, data = alpha_long)
+vif(fixed_model, type="predictor")  # Or vif(fixed_model, type = "predictor")
+
+

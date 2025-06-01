@@ -1,4 +1,4 @@
-plot_prediction_effects <- function(model, exclude_intercept = TRUE, custom_labels = NULL, TITLE = "") {
+plot_prediction_effects <- function(model, exclude_intercept = TRUE, custom_labels = NULL, TITLE = "", XLAB = "") {
   library(broom.mixed)
   library(ggplot2)
   library(dplyr)
@@ -31,9 +31,9 @@ plot_prediction_effects <- function(model, exclude_intercept = TRUE, custom_labe
     geom_errorbarh(aes(xmin = mult_low, xmax = mult_high), height = 0.2, linewidth = 1.2) +
     geom_vline(xintercept = 1, linetype = "dashed", color = "gray", linewidth = 1) +
     labs(
-      x = "Multiplicative Effect on Raw Prediction Error",
+      x = XLAB,
       y = "",
-      title = paste0("Prediction Error Effects with 95% CI", TITLE)
+      title = paste0(TITLE)
     ) +
     theme_minimal(base_size = 14) +
     theme(
