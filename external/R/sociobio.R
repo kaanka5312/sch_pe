@@ -7,6 +7,19 @@ library(R.matlab); library(tidyverse); library(reshape2)
 setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 dat <- readxl::read_xlsx("./data/raw/DataElif.xlsx")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
+
+
+subj_table <- subj_table[complete.cases(subj_table[, c("PANSS.Total", 
+                                                       "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS")]), ]
+
+
+varsToNum <- c("age", "ap", "AgeOfOnset", "DoI", "PANSS.Total", 
+               "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS")
+# First trim whitespace
+subj_table[varsToNum] <- lapply(subj_table[varsToNum], function(x) as.numeric(trimws(x)))
+
+
+
 df_sz <- subj_table[subj_table$group==1, ]
 df_sz <- df_sz[order(df_sz$name),]
 
@@ -48,11 +61,11 @@ convert_to_long <- function(dat, subj_table) {
 pe_long <- convert_to_long(pe,subj_table = subj_table)
 
 rmse_summary <- pe_long %>% 
-  filter(Subject %in% dat_sz$subj) %>%
+  filter(Subject %in% df_sz$subj) %>%
   group_by(Subject) %>%
   summarise(rmse_PE = sqrt(mean(PE^2)))
 
-dat_sz$rmse <- rmse_summary$rmse_PE
+df_sz$rmse <- rmse_summary$rmse_PE
 
 dat_sz$`PANSS-Positive` <- as.numeric(dat_sz$`PANSS-Positive`)
 
@@ -63,3 +76,20 @@ library(MASS)
 
 model <- polr(`PANSS-Positive` ~ rmse, data = dat_sz, Hess = TRUE)
 summary(model)
+
+selected_vars <- c("PANSS.Total", "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS")
+
+# Example data
+# df <- data.frame(target = ..., var1 = ..., var2 = ..., var3 = ...)
+
+results <- lapply(selected_vars, function(var) {
+  test <- cor.test(df_sz$rmse, df_sz[[var]], use = "complete.obs")
+  data.frame(
+    variable = var,
+    correlation = test$estimate,
+    p_value = test$p.value
+  )
+})
+
+cor_df <- do.call(rbind, results)
+
