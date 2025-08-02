@@ -202,6 +202,9 @@ T_last$yatirim <- factor(T_last$yatirim)
 T_last$group <- factor(T_last$group)
 T_last$phase <- factor(T_last$phase)
 
+write.csv(T_last, "./data/processed/behavioral_last.csv", row.names = FALSE)
+
+
 # Investigating the table 
 # DO NOT FORGET ! THIS DOESNT CONSIDERED THE REPEATED MEASURE DESIGN SO CONTINUE
 # TO GLM MODEL
