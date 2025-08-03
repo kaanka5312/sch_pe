@@ -9,8 +9,10 @@ dat <- readxl::read_xlsx("./data/raw/DataElif.xlsx")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
 
 
-subj_table <- subj_table[complete.cases(subj_table[, c("PANSS.Total", 
-                                                       "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS")]), ]
+subj_table <- subj_table[complete.cases(subj_table[, c(
+    "PANSS.Total","SANS","CDSS","SCORS.GA","OSCARS.TA","FROGS"
+    )]), 
+]
 
 
 varsToNum <- c("age", "ap", "AgeOfOnset", "DoI", "PANSS.Total", 
@@ -93,3 +95,37 @@ results <- lapply(selected_vars, function(var) {
 
 cor_df <- do.call(rbind, results)
 
+# Testing are scores statistically different between different sex
+library(rstatix);library(tidyverse)
+
+subj_table %>%
+  slice(-c(9, 44)) %>%
+  filter(group == 1) %>%
+  filter(!is.na(PANSS.Total)) %>%
+  rstatix::t_test(PANSS.Total ~ sex)
+
+  library(dplyr)
+
+library(tidyr)
+library(rstatix)
+
+# Clean and filter the data first
+filtered_data <- subj_table %>%
+  mutate(
+    education = as.numeric(education),
+    marriage = as.numeric(marriage)
+  ) %>%
+  slice(-c(9, 44)) %>%
+  filter(group == 1)
+
+# Specify outcome variables you want to test
+outcomes <- c("PANSS.Total", "SANS", "CDSS", "SCORS.GA","OSCARS.TA","FROGS")
+
+# Reshape and run t-tests
+filtered_data %>%
+  select(sex, all_of(outcomes)) %>%
+  pivot_longer(cols = -sex, names_to = "variable", values_to = "value") %>%
+  drop_na() %>%
+  group_by(variable) %>%
+  t_test(value ~ sex) %>%
+  adjust_pvalue(method = "bonferroni")
