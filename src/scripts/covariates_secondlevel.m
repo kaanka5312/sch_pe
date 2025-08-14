@@ -4,7 +4,7 @@
 clear all; clc;
 S = readtable('/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv', 'Delimiter', ',');
 path1='/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/analysis/firstlevel/';
-contrasts = arrayfun(@num2str, 30, 'UniformOutput', false);
+contrasts = arrayfun(@num2str, 27, 'UniformOutput', false);
 
 for cont = 1:numel(contrasts)
     path2=['/task/con_00' contrasts{cont} '.nii'];
