@@ -115,7 +115,7 @@ filtered_data <- subj_table %>%
     education = as.numeric(education),
     marriage = as.numeric(marriage)
   ) %>%
-  slice(-c(9, 44)) %>%
+  slice(-c(9, 39, 44, 74)) %>%
   filter(group == 1)
 
 # Specify outcome variables you want to test
