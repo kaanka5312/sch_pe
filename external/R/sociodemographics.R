@@ -14,7 +14,7 @@ subj_table <- read.csv("./data/raw/subjects_list.csv")
 subj_table <- subset(subj_table, !(subj %in% c(9, 39, 44, 74)))
 
 # Education Years will be added 
-varsToNum <- c("age", "ap", "AgeOfOnset", "DoI", "education", "PANSS.Total", "PANSS.Positive", "PANSS.Negative", "PANSS.General", "SCORS.GA", "FROGS")
+varsToNum <- c("age", "ap", "AgeOfOnset", "DoI", "education", "PANSS.Total", "PANSS.Positive", "PANSS.Negative", "PANSS.General", "SCORS.GA", "FROGS", "ESRS")
 # First trim whitespace
 subj_table[varsToNum] <- lapply(subj_table[varsToNum], function(x) as.numeric(trimws(x)))
 
@@ -246,3 +246,14 @@ doc <- body_add_flextable(doc, ft)
 
 # Save the document
 print(doc, target = "./writing/table1_demographics.docx")
+
+# Just for ESRS
+esrs <- as.numeric(subj_table["ESRS"][subj_table["group"]==1])
+# Mean ignoring NA
+mean_x <- mean(esrs, na.rm = TRUE)
+
+# Standard deviation ignoring NA
+sd_x <- sd(esrs, na.rm = TRUE)
+
+mean_x
+sd_x
