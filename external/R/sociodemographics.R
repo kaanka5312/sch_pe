@@ -4,10 +4,10 @@ library(readxl)
 library(tidyverse)
 
 # Windows
-setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 
 # Macos 
-# setwd("/Users/kaankeskin/projects/sch_pe/")
+setwd("/Users/kaankeskin/projects/sch_pe/")
 #dat <- read_xlsx("./data/raw/DataElif.xlsx")
 
 subj_table <- read.csv("./data/raw/subjects_list.csv")
@@ -195,7 +195,7 @@ augment_tableone_with_tests <- function(tab, data, group_var, vars, factorVars =
 # ==== Your variables & usage ====
 vars <- c("age", "ap", "AgeOfOnset", "DoI", "education", "sex",
           "PANSS.Total", "PANSS.Positive", "PANSS.Negative",
-          "PANSS.General", "SCORS.GA", "FROGS")
+          "PANSS.General", "SCORS.GA", "FROGS", "SAPS", "SANS", "CDSS", "OSCARS.TA")
 group_var <- "group"
 
 tab <- CreateTableOne(vars = vars,

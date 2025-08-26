@@ -2,9 +2,13 @@
 # that is subject characteristics
 
 library(R.matlab); library(tidyverse); library(reshape2)
-#setwd("/Users/kaankeskin/projects/sch_pe/")
+
+# MacOS 
+setwd("/Users/kaankeskin/projects/sch_pe/")
+
 # Microsoft
-setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+
 dat <- readxl::read_xlsx("./data/raw/DataElif.xlsx")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
 
@@ -68,6 +72,8 @@ rmse_summary <- pe_long %>%
   summarise(rmse_PE = sqrt(mean(PE^2)))
 
 df_sz$rmse <- rmse_summary$rmse_PE
+df_sz[["PANSS.Positive"]] <- as.numeric(df_sz[["PANSS.Positive"]])
+
 
 dat_sz$`PANSS-Positive` <- as.numeric(dat_sz$`PANSS-Positive`)
 
@@ -79,7 +85,7 @@ library(MASS)
 model <- polr(`PANSS-Positive` ~ rmse, data = dat_sz, Hess = TRUE)
 summary(model)
 
-selected_vars <- c("PANSS.Total", "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS")
+selected_vars <- c("PANSS.Positive","PANSS.Total", "SCORS.GA","FROGS", "ap")
 
 # Example data
 # df <- data.frame(target = ..., var1 = ..., var2 = ..., var3 = ...)
