@@ -4,10 +4,10 @@ library(readxl)
 library(tidyverse)
 
 # Windows
-#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 
 # Macos 
-setwd("/Users/kaankeskin/projects/sch_pe/")
+#setwd("/Users/kaankeskin/projects/sch_pe/")
 #dat <- read_xlsx("./data/raw/DataElif.xlsx")
 
 subj_table <- read.csv("./data/raw/subjects_list.csv")
@@ -248,7 +248,7 @@ doc <- body_add_flextable(doc, ft)
 print(doc, target = "./writing/table1_demographics.docx")
 
 # Just for ESRS
-esrs <- as.numeric(subj_table["ESRS"][subj_table["group"]==1])
+esrs <- as.numeric(subj_table["CDSS"][subj_table["group"]==1])
 # Mean ignoring NA
 mean_x <- mean(esrs, na.rm = TRUE)
 

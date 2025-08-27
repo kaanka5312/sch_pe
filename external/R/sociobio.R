@@ -4,23 +4,23 @@
 library(R.matlab); library(tidyverse); library(reshape2)
 
 # MacOS 
-setwd("/Users/kaankeskin/projects/sch_pe/")
+#setwd("/Users/kaankeskin/projects/sch_pe/")
 
 # Microsoft
-#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 
 dat <- readxl::read_xlsx("./data/raw/DataElif.xlsx")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
 
 
 subj_table <- subj_table[complete.cases(subj_table[, c(
-    "PANSS.Total","SANS","CDSS","SCORS.GA","OSCARS.TA","FROGS"
+    "PANSS.Total","SANS","CDSS","SCORS.GA","OSCARS.TA","FROGS", "SAPS"
     )]), 
 ]
 
 
 varsToNum <- c("age", "ap", "AgeOfOnset", "DoI", "PANSS.Total", 
-               "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS")
+               "SANS", "CDSS","SCORS.GA","OSCARS.TA","FROGS", "SAPS")
 # First trim whitespace
 subj_table[varsToNum] <- lapply(subj_table[varsToNum], function(x) as.numeric(trimws(x)))
 
@@ -125,7 +125,7 @@ filtered_data <- subj_table %>%
   filter(group == 1)
 
 # Specify outcome variables you want to test
-outcomes <- c("PANSS.Total", "SANS", "CDSS", "SCORS.GA","OSCARS.TA","FROGS")
+outcomes <- c("PANSS.Total", "SANS", "CDSS", "SCORS.GA","OSCARS.TA","FROGS", "SAPS")
 
 # Reshape and run t-tests
 filtered_data %>%
