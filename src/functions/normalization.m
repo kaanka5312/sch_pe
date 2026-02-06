@@ -8,15 +8,12 @@ for i = 1 : size(PE,2)
 
     %to normalize in [a,b]
     % x = [b-a]*((x-minx)/(maxx-minx)) +a
-maxPE = max(PE(:,i));
-minPE = min(PE(:,i));
+	maxPE = max(PE(:,i));
+	minPE = min(PE(:,i));
 
-x = 2*(PE(:,1)-minPE)/(maxPE-minPE)-1;
+	x = 2*(PE(:,i)-minPE)/(maxPE-minPE)-1;
 
-%sinyali kuvvetlendirmek için 1 e böl
-%PEnor (:,i) = 1./x;
-%otherwise
-PEnor(:,i+1) = x;
+	PEnor(:,i) = x;
 
 end
 
