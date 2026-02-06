@@ -1,0 +1,12 @@
+library(R.matlab); library(tidyverse); library(reshape2)#
+setwd("/Users/kaankeskin/projects/sch_pe/")
+dat <- list(readMat("./data/processed/normalized_pe_array2.mat"), # Cemre RW PE#
+            readMat("./data/processed/x2_array.mat"), # HGF X2#
+            readMat("./data/processed/x3_array.mat"), # HGF X3#
+            readMat("./data/processed/x2_pe_array.mat"), # HGF low level PE#
+            readMat("./data/processed/x3_pe_array.mat"), # HGF high level PE#
+            readMat("./data/processed/alfa2_array.mat"), # learning rate level 2#
+            readMat("./data/processed/alfa3_array.mat"), # learning rate level 3#
+            readMat("./data/processed/rw_pe.mat") # RW model PE from TAPAS#
+)
+dat

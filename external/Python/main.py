@@ -1,34 +1,71 @@
-# Main text of the Python version of the PE research
 import pandas as pd
-from model_functions import fit_subject, get_signals
-from data_utils import normalize_to_fmri, save_to_task_folder
+from model_functions import fit_subject_parameters, generate_rl_signals
+from data_utils import normalize_to_fmri, format_as_wide_csv
+
+# %% This part is fitting new RL model to data 
 
 # Setup paths
-DATA_CSV = 'data/raw/response.csv'
-OUTPUT_DIR = '/Volumes/Elements/SoCAT/derivatives/rl_analysis/'
-
+DATA_CSV = '/Users/kaankeskin/projects/sch_pe/data/raw/response.csv'
+#OUTPUT_DIR = '/Volumes/Elements/SoCAT/derivatives/rl_analysis/'
+FINAL_OUTPUT_CSV = '/Users/kaankeskin/projects/sch_pe/data/processed/RL_model_results.csv'
+# Elif Ozge Subjects proper id numbers to use 
+subjects = [
+    8, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 33, 35, 43, 45, 51,
+    59, 60, 63, 64, 67, 68, 69, 74, 76, 77, 78, 80, 82, 85, 87, 88, 90,
+    91, 92, 93, 94, 97, 99, 101, 102, 104, 105, 108, 109, 117, 119,
+    120, 121, 124, 126, 132, 134, 135
+]
 def main():
+    # 1. Load the behavioral data
     df = pd.read_csv(DATA_CSV)
-    subjects = df['denekId'].unique()
+    # This list will store a dictionary for every subject
+    param_list = []
+    pe_raw_list, pe_norm_list = [], []
+    v_raw_list, v_norm_list = [], []
     
     for subj in subjects:
         print(f"Fitting Subject: {subj}")
         subj_data = df[df['denekId'] == subj]
         
-        # Prepare choice (1/0) and rewards
-        choices = subj_data['invest_choice'].values 
-        outcomes = subj_data['points_received'].values
+        # 2. Prepare choice and rewards
+        # Ensure these column names match your CSV headers
+        choices = subj_data['secim'].values 
+        outcomes = subj_data['kazanc'].values
         
-        # 1. MLE Parameter Fitting
-        alpha, tau = fit_subject(choices, outcomes)
+        # 3. MLE Parameter Fitting
+        # This calls the function you defined in model_functions.py
+        alpha, tau = fit_subject_parameters(choices, outcomes)
+        param_list.append({'denekId': subj, 'alpha': alpha, 'tau': tau})
+        # 4. Generate trial-by-trial RL signals (PE and Value)
+        # Using the updated function name from your model_functions.py
+        pe_raw, v_raw = generate_rl_signals(alpha, choices, outcomes)
         
-        # 2. Extract Signals
-        pe_raw, v_raw = get_signals(alpha, choices, outcomes)
-        
-        # 3. Normalize & Save
+        # 5. Normalize & Save for fMRI
+        # Maps signals to [-1, 1] as required for the GLM
         pe_norm = normalize_to_fmri(pe_raw)
         v_norm = normalize_to_fmri(v_raw)
-        save_to_task_folder(subj, pe_norm, v_norm, OUTPUT_DIR)
+        
+        # 4. Collect for CSVs
+        pe_raw_list.append({'denekId': subj, 'vector': pe_raw})
+        pe_norm_list.append({'denekId': subj, 'vector': pe_norm})
+        v_raw_list.append({'denekId': subj, 'vector': v_raw})
+        v_norm_list.append({'denekId': subj, 'vector': v_norm})
+        
+    # Save 1: Parameters
+    pd.DataFrame(param_list).to_csv('/Users/kaankeskin/projects/sch_pe/data/processed/model_parameters.csv', index=False)
+    
+    # Save 2-5: Vectors in Wide Format
+    format_as_wide_csv(pe_raw_list, '/Users/kaankeskin/projects/sch_pe/data/processed/pe_raw.csv')
+    format_as_wide_csv(pe_norm_list, '/Users/kaankeskin/projects/sch_pe/data/processed/pe_norm.csv')
+    format_as_wide_csv(v_raw_list, '/Users/kaankeskin/projects/sch_pe/data/processed/v_raw.csv')
+    format_as_wide_csv(v_norm_list, '/Users/kaankeskin/projects/sch_pe/data/processed/v_norm.csv')
+
+    print("All CSVs generated successfully.")
+
+# %% This part is for comparing the parameters between clinical groups statistics 
+    # 2. NOW CALL THE COMPARISON SCRIPT
+    run_group_stats(params_csv='/Users/kaankeskin/projects/sch_pe/data/processed/model_parameters.csv', 
+                    subjects_csv='/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv')
 
 if __name__ == "__main__":
     main()
