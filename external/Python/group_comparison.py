@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-def run_group_stats(params_csv='data/processed/model_parameters.csv', 
-                    pe_raw_csv='data/processed/pe_raw.csv', 
-                    subjects_csv='data/raw/subjects_list.csv'):
+def run_group_stats(params_csv='/Users/kaankeskin/projects/sch_pe/data/processed/model_parameters.csv', 
+                    pe_raw_csv='/Users/kaankeskin/projects/sch_pe/data/processed/pe_raw.csv', 
+                    subjects_csv='/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv'):
     print("\n--- Starting Group Comparison (Alpha, Tau, and Raw PE) ---")
     
     # 1. Load Data
@@ -61,7 +61,7 @@ def run_group_stats(params_csv='data/processed/model_parameters.csv',
         plt.title(f'Group Comparison: {param.capitalize()}')
 
     plt.tight_layout()
-    plt.savefig('results/figures/group_results_full.png')
+    plt.savefig('/Users/kaankeskin/projects/sch_pe/results/figures/group_results_full.png')
     print("\nResults saved to group_results_full.png")
 
 if __name__ == "__main__":

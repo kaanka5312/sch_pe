@@ -1,8 +1,8 @@
-# Loading libraries
-library(R.matlab); library(tidyverse); library(reshape2)
-#setwd("/Users/kaankeskin/projects/sch_pe/")
+# %% Loading libraries
+library(R.matlab); library(tidyverse); library(reshape2); library(ggplot2); library(ggpubr)
+setwd("/Users/kaankeskin/projects/sch_pe/")
 # Microsoft
-setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
+#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 #
 dat <- list(readMat("./data/processed/normalized_pe_array2.mat"), # Cemre RW PE
             readMat("./data/processed/x2_array.mat"), # HGF X2
@@ -11,55 +11,42 @@ dat <- list(readMat("./data/processed/normalized_pe_array2.mat"), # Cemre RW PE
             readMat("./data/processed/x3_pe_array.mat"), # HGF high level PE
             readMat("./data/processed/alfa2_array.mat"), # learning rate level 2
             readMat("./data/processed/alfa3_array.mat"), # learning rate level 3
-            readMat("./data/processed/rw_pe.mat") # RW model PE from TAPAS
+            readMat("./data/processed/rw_pe.mat"), # RW model PE from TAPAS
+	    data.matrix(read.csv("./data/processed/pe_raw.csv",row.names=1))
 )
 
+# %% Functions and running 
 subj_table <- read.csv("./data/raw/subjects_list.csv")
-subj_table <- subset(subj_table, !(subj %in% c(9, 44)))
-#dat <- readMat("/Users/kaankeskin/projects/sch_pe/data/processed/normalized_pe_array.mat")
-
+subj_table <- subset(subj_table, !(subj %in% c(9, 44, 77)))
 convert_to_long <- function(dat, subj_table, exclude=TRUE) {
   # Extract PE matrix (first 60 columns) and group information (column 61)
-  if (exclude) dat$merged.matrix <- dat$merged.matrix[-c(9, 44), ]
-  
+  if (exclude) dat$merged.matrix <- dat$merged.matrix[-c(9, 44, 77), ]
   pe_mat <- dat$merged.matrix[,1:60]
   group <- factor(ifelse(dat$merged.matrix[,61], "sz", "hc"))
   task <- factor(rep(1:3, each = 20))  # Assuming 3 tasks with 20 trials each
   sex <- factor(ifelse(subj_table$sex, "M", "F"))
   age <- as.numeric(subj_table$age)
   doi <- as.numeric(subj_table$DoI)
-  
   # Convert PE matrix to a data frame
   pe_df <- as.data.frame(pe_mat)
-  
   # Add Subject IDs
   pe_df$Subject <- seq_len(nrow(pe_mat))  # Assign unique IDs to subjects
-  
   # Reshape to long format
   long_pe <- melt(pe_df, id.vars = "Subject", variable.name = "Trial", value.name = "PE")
-  
   # Convert Trial variable to numeric
   #long_pe$Trial <- as.numeric(gsub("V", "", long_pe$Trial))  # Remove "V" prefix if needed
-  
   # Add Group information (repeat for each trial)
   long_pe$Group <- rep(group, each = ncol(pe_mat))
-  
   # Add Task information (repeat for each subject)
   long_pe$Task <- rep(task, times = nrow(pe_mat))
-  
   # Add Sex information (repeat for each trial)
   long_pe$Sex <- rep(sex, each = ncol(pe_mat))
-  
   # Add Age information (repeat for each trial)
   long_pe$Age <- rep(age, each = ncol(pe_mat)) 
-  
   # Add DoI information (repeat for each trial)
   long_pe$DoI <- rep(doi, each = ncol(pe_mat)) 
-  
-  
   return(long_pe)
 }
-
 # Usage
 long_pe_list <- lapply(dat, convert_to_long, subj_table = subj_table)
 
