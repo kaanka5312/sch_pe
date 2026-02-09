@@ -2,14 +2,15 @@
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+
+"""
+# This was the old Likelihood. 
 def compute_log_likelihood(params, choices, rewards):
-    """
-    Implements the Sigmoid Softmax and Rescorla-Wagner update.
-    Returns Negative Log-Likelihood for optimization.
-    """
+   #j Implements the Sigmoid Softmax and Rescorla-Wagner update.
+   # Returns Negative Log-Likelihood for optimization.
     alpha, tau = params
-    v = 0.5       # Initial Expected Value (Neutral)
-    v_safe = 10   # Value of the 'Not Invest' choice
+    v = 20       # Initial Expected Value (Neutral)
+    v_safe = 20   # Value of the 'Not Invest' choice
     
     neg_ll = 0
     eps = 1e-10   # Stability constant
@@ -28,70 +29,109 @@ def compute_log_likelihood(params, choices, rewards):
         v = v + alpha * delta
         
     return neg_ll
+"""
+def compute_log_likelihood(params, choices, rewards):
+    alpha, tau = params
+    # Önemli: Ham ödülleri (20, 60, 0) burada bir kez normalize ediyoruz
+    r_norm = rewards / 10.0
+    v_safe = 2.0   # 20 TL / 10
+    v = 2.0        # Başlangıç (Nötr)
+    
+    neg_ll = 0
+    eps = 1e-10
+    
+    for t in range(len(choices)):
+        prob_invest = 1 / (1 + np.exp(-tau * (v - v_safe)))
+        p_choice = prob_invest if choices[t] == 1 else (1 - prob_invest)
+        neg_ll -= np.log(p_choice + eps)
+        
+        if choices[t] == 1:
+            v = v + alpha * (r_norm[t] - v)
+    return neg_ll
 
 def fit_subject_parameters(choices, rewards):
     """Fits Alpha and Tau using Maximum Likelihood Estimation."""
     # Bounds: Alpha [0, 1], Tau [0, 20]
     res = minimize(compute_log_likelihood, x0=[0.5, 1.0], 
                    args=(choices, rewards), 
-                   bounds=[(0, 1), (0.001, 20)], method='L-BFGS-B')
+                   bounds=[(0, 1), (0.001, 1)], method='L-BFGS-B')
     return res.x # returns [alpha, tau]
 
+def fit_subject_parameters_robust(choices, rewards):
+    best_res = None
+    # Farklı Tau başlangıç noktalarıyla dene: 0.1, 1.0, 10.0
+    for start_tau in [0.1, 1.0, 5.0]:
+        res = minimize(compute_log_likelihood, 
+                       x0=[0.2, start_tau], # Alpha 0.2, Tau değişken
+                       args=(choices, rewards), 
+                       bounds=[(0, 1), (0.001, 10.0)], 
+                       method='L-BFGS-B')
+        
+        if best_res is None or res.fun < best_res.fun:
+            best_res = res
+            
+    return best_res.x
+
 def generate_rl_signals(alpha, choices, rewards):
-    """Generates trial-by-trial PE and Value signals using best-fit alpha."""
-    v = 0.5
+    """Fitted alpha ile trial-by-trial PE ve Value sinyallerini üretir."""
+    v = 2.0         # NORMALIZE: 20 yerine 2.0
+    r_norm = rewards / 10.0
     pe_history = []
     v_history = []
     
     for t in range(len(choices)):
-        v_history.append(v)     # Expected Value BEFORE outcome
-        delta = rewards[t] - v  # Signed Prediction Error
+        v_history.append(v)            # Seçim öncesi beklenen değer
+        delta = r_norm[t] - v          # Normalize PE
         pe_history.append(delta)
-        v = v + alpha * delta   # Update for next trial
         
+        # KRİTİK: Sadece yatırım yapıldığında öğrenme gerçekleşir
+        if choices[t] == 1:
+            v = v + alpha * delta
+        # Pas geçilirse v bir sonraki trial için aynı kalır
+            
     return np.array(pe_history), np.array(v_history)
 
-
 def simulate_behavior_recovery(alpha, tau, num_trials=60):
-    """Simulates a subject's choices and rewards."""
-    v = 0.5
-    v_safe = 20
+    # Simülasyon kendi içinde normalize (2.0) çalışır ama dışarıya 
+    # gerçek görevdeki gibi ham (20, 60, 0) ödülleri verir.
+    v = 2.0
+    v_safe = 2.0
     choices = []
-    rewards = []
+    rewards_raw = []
     
     for t in range(num_trials):
-        # Softmax selection
         prob_invest = 1 / (1 + np.exp(-tau * (v - v_safe)))
         choice = 1 if np.random.rand() < prob_invest else 0
         
-        # Reward logic (matches your Task: 80% win, etc.)
         if choice == 1:
-            # Simplified: 70% chance of 30TL, 30% chance of 0TL
+            # Manuskript: %70 Trust (60 TL), %30 No-Trust (0 TL)
             reward = 60 if np.random.rand() < 0.7 else 0
         else:
-            reward = 20
+            reward = 20 # Keep: 20 TL
             
         choices.append(choice)
-        rewards.append(reward)
-        v = v + alpha * (reward - v)
+        rewards_raw.append(reward)
         
-    return np.array(choices), np.array(rewards)
+        if choice == 1:
+            v = v + alpha * ((reward/10.0) - v)
+            
+    return np.array(choices), np.array(rewards_raw)
 
-def simulate_behavior_ppc(alpha, tau, rewards, v_init=0.5, v_safe=20):
-    """Subject'in parametreleri ile yapay kararlar üretir."""
+def simulate_behavior_ppc(alpha, tau, rewards, v_init=2.0, v_safe=2.0):
+    """Subject'in parametreleri ile normalize ölçekte yapay kararlar üretir."""
     n_trials = len(rewards)
+    r_norm = rewards / 10.0
     choices = np.zeros(n_trials)
     v = v_init
     
     for t in range(n_trials):
-        # Softmax: Yatırım yapma olasılığını hesapla
         prob_invest = 1 / (1 + np.exp(-tau * (v - v_safe)))
-        # Olasılığa göre rastgele bir seçim yap (0 veya 1)
         choices[t] = np.random.choice([1, 0], p=[prob_invest, 1 - prob_invest])
         
-        # Rescorla-Wagner güncellemesi (Gerçek ödülü kullanarak)
-        v = v + alpha * (rewards[t] - v)
-        
+        # KRİTİK: Sadece yatırım yapıldığında güncelleme
+        if choices[t] == 1:
+            v = v + alpha * (r_norm[t] - v)
+            
     return choices
 
 def plot_ppc(actual_choices, rewards, alpha, tau, n_sims=100):
@@ -139,3 +179,10 @@ def compute_null_log_likelihood(choices):
                      (1 - choices) * np.log(1 - p_mean + eps))
     
     return -null_ll # Return Negative LL to match your other function
+
+def compute_null_log_likelihood_chance(choices):
+    # Denek her zaman yazı-tura atıyormuş gibi (p=0.5)
+    n_trials = len(choices)
+    # LL = n_trials * log(0.5)
+    null_ll = n_trials * np.log(0.5)
+    return -null_ll

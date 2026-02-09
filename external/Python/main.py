@@ -1,6 +1,7 @@
+# %% LIBRARIES
 import pandas as pd
 import numpy as np
-from model_functions import fit_subject_parameters, generate_rl_signals
+from model_functions import fit_subject_parameters, generate_rl_signals, fit_subject_parameters_robust
 from data_utils import normalize_to_fmri, format_as_wide_csv
 from group_comparison import run_group_stats
 
@@ -44,7 +45,8 @@ def main():
         outcomes = subj_data['kazanc'].values
         # 3. MLE Parameter Fitting
         # This calls the function you defined in model_functions.py
-        alpha, tau = fit_subject_parameters(choices, outcomes)
+        print(f"Subject {subj} - Unique outcomes: {np.unique(outcomes)}")
+        alpha, tau = fit_subject_parameters_robust(choices, outcomes)
         param_list.append({'denekId': subj, 'alpha': alpha, 'tau': tau})
         # 4. Generate trial-by-trial RL signals (PE and Value)
         # Using the updated function name from your model_functions.py
