@@ -3,13 +3,13 @@ import pandas as pd
 import numpy as np
 from model_functions import simulate_behavior_ppc, plot_ppc, compute_null_log_likelihood, compute_log_likelihood, compute_null_log_likelihood_chance
 import matplotlib.pyplot as plt
-PROJECT_FOLDER = '~/OneDrive/Belgeler/GitHub/sch_pe/'
-#PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
+#PROJECT_FOLDER = '~/OneDrive/Belgeler/GitHub/sch_pe/'
+PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
 all_subjects=pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
 subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/model_parameters.csv')
 
 # %%
-idx = 10099
+idx = 100101
 alpha_test = subjects_params.loc[subjects_params['denekId']==idx, 'alpha']
 tau_test = subjects_params.loc[subjects_params['denekId']==idx, 'tau']
 choices_real = all_subjects.loc[all_subjects['denekId'] == idx, 'yatirim'].to_numpy()
@@ -84,6 +84,8 @@ plot_ppc_smooth(choices_clean, kazanc_clean, alpha_val, tau_val)
 
 # %% Measuring how much subject learned 
 # 1. Get your optimized NLL from your previous fit
+# Burada MAP olan halini degil, modelin bizim varsayimlarimizi aciklamasini istemedigmizden
+# duz halini kullaniyoruz
 rl_nll = compute_log_likelihood([alpha_val, tau_val], choices_clean, kazanc_clean)
 # 2. Get the Null NLL
 null_nll = compute_null_log_likelihood_chance(choices_clean)

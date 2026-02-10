@@ -2,7 +2,38 @@
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+from scipy.stats import beta, gamma
 
+# Prior Parametreleri (Literatürde sık kullanılan değerler)
+# Alpha için Beta(1.1, 1.1) -> 0 ile 1 arasını korur, uçlara çok sert gitmez.
+# Tau için Gamma(shape=2, scale=3) -> Zirvesi 3-4 civarıdır, 10'a gitmeyi cezalandırır.
+def compute_neg_log_posterior(params, choices, rewards):
+    alpha, tau = params
+    
+    # 1. Standart Negative Log-Likelihood hesapla (Senin mevcut fonksiyonun)
+    neg_ll = compute_log_likelihood(params, choices, rewards)
+    
+    # 2. Log-Prior hesapla (Parametrelerin "cezası")
+    # Alpha [0,1] aralığında olmalı
+    prior_alpha = beta.logpdf(alpha, 1.1, 1.1)
+    
+    # Tau pozitif olmalı ve çok büyük değerler cezalandırılmalı
+    prior_tau = gamma.logpdf(tau, 2, scale=1)
+    
+    # Toplam Hata = Neg_LL - (Log_Priors)
+    # (Eksi olmasının sebebi minimize ettiğimiz için; olasılığı maksimize etmek, negatifini minimize etmektir)
+    return neg_ll - (prior_alpha + prior_tau)
+
+def fit_subject_parameters_map(choices, rewards):
+    """Alpha ve Tau'yu MAP estimation kullanarak fit eder."""
+    # Bounds: Alpha [0, 1], Tau [0.001, 20]
+    # Not: MAP kullandığımızda Tau sınırı 10 veya 20 olabilir, 
+    # çünkü prior onu zaten ortalarda tutmaya çalışacak.
+    res = minimize(compute_neg_log_posterior, x0=[0.2, 2.0], 
+                   args=(choices, rewards), 
+                   bounds=[(1e-5, 1), (0.01, 20.0)], method='L-BFGS-B')
+    
+    return res.x # [alpha_map, tau_map]
 """
 # This was the old Likelihood. 
 def compute_log_likelihood(params, choices, rewards):
