@@ -18,7 +18,7 @@ for a_true in true_alphas:
         
         # 2. Likelihood içinde r'yi 10'a bölecek, yani denge kurulacak
         res = minimize(compute_log_likelihood, x0=[0.2, 1.0], args=(c, r),
-                       bounds=[(1e-5, 1), (0.01, 1)], method='L-BFGS-B')
+                       bounds=[(1e-5, 1), (0.01, 2)], method='L-BFGS-B')
         
         all_true.append(a_true)
         all_recovered.append(res.x[0])
