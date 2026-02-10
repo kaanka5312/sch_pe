@@ -3,8 +3,10 @@ import pandas as pd
 import numpy as np
 from model_functions import simulate_behavior_ppc, plot_ppc, compute_null_log_likelihood, compute_log_likelihood, compute_null_log_likelihood_chance
 import matplotlib.pyplot as plt
-all_subjects=pd.read_csv('/Users/kaankeskin/projects/sch_pe/data/processed/all_subjects.csv')
-subjects_params = pd.read_csv('/Users/kaankeskin/projects/sch_pe/data/processed/model_parameters.csv')
+PROJECT_FOLDER = '~/OneDrive/Belgeler/GitHub/sch_pe/'
+#PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
+all_subjects=pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
+subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/model_parameters.csv')
 
 # %%
 idx = 10099
