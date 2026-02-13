@@ -1,9 +1,29 @@
 # %% LIBRARIES
+from pathlib import Path
+import subprocess
+import os
+import sys
 import pandas as pd
 import numpy as np
 from model_functions import fit_subject_parameters, generate_rl_signals, fit_subject_parameters_map
 from data_utils import normalize_to_fmri, format_as_wide_csv
-from group_comparison import run_group_stats
+# Create a copy of the current environment and force UTF-8
+env = os.environ.copy()
+env["PYTHONIOENCODING"] = "utf-8"
+# 3. Run it using absolute paths
+subprocess.run(
+    [sys.executable, './model_fitting_grid.py'],  # Use the full path here
+    capture_output=True, 
+    text=True, 
+    env=env
+)
+
+subprocess.run(
+    [sys.executable, './wsls.py'],  # Use the full path here
+    capture_output=True, 
+    text=True, 
+    env=env
+)
 
 
 # %% This part is fitting new RL model to data 
