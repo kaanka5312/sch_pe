@@ -11,20 +11,27 @@ from data_utils import normalize_to_fmri, format_as_wide_csv
 env = os.environ.copy()
 env["PYTHONIOENCODING"] = "utf-8"
 # 3. Run it using absolute paths
+# Fits basic RL model 
 subprocess.run(
     [sys.executable, './model_fitting_grid.py'],  # Use the full path here
     capture_output=True, 
     text=True, 
     env=env
 )
-
+# Investigates do subjects invests after winning or losing 
 subprocess.run(
     [sys.executable, './wsls.py'],  # Use the full path here
     capture_output=True, 
     text=True, 
     env=env
 )
-
+# Important ! Compares with adaptive learning rate with BIC and WAIC
+subprocess.run(
+    [sys.executable, './model_cemre.py'],  # Use the full path here
+    capture_output=True, 
+    text=True, 
+    env=env
+)
 
 # %% This part is fitting new RL model to data 
 # Setup paths
