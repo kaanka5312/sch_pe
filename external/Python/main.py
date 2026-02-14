@@ -10,28 +10,17 @@ from data_utils import normalize_to_fmri, format_as_wide_csv
 # Create a copy of the current environment and force UTF-8
 env = os.environ.copy()
 env["PYTHONIOENCODING"] = "utf-8"
+
+def run_task(script_path):
+    return subprocess.run([sys.executable, script_path], capture_output=True, text=True, env=env)
+
 # 3. Run it using absolute paths
 # Fits basic RL model 
-subprocess.run(
-    [sys.executable, './model_fitting_grid.py'],  # Use the full path here
-    capture_output=True, 
-    text=True, 
-    env=env
-)
-# Investigates do subjects invests after winning or losing 
-subprocess.run(
-    [sys.executable, './wsls.py'],  # Use the full path here
-    capture_output=True, 
-    text=True, 
-    env=env
-)
-# Important ! Compares with adaptive learning rate with BIC and WAIC
-subprocess.run(
-    [sys.executable, './model_cemre.py'],  # Use the full path here
-    capture_output=True, 
-    text=True, 
-    env=env
-)
+run_task('./model_fitting_grid.py')
+# Checking subjects fit for visualization
+run_task('./PPC_RL.py')
+run_task('./wsls.py')
+run_task('./model_cemre.py')
 
 # %% This part is fitting new RL model to data 
 # Setup paths

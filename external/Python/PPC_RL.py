@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 #PROJECT_FOLDER = '~/OneDrive/Belgeler/GitHub/sch_pe/'
 PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
 all_subjects=pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
-subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/model_parameters.csv')
+subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/final_group_parameters.csv')
 
 # %%
-idx = 100101
+idx = 15
 alpha_test = subjects_params.loc[subjects_params['denekId']==idx, 'alpha']
 tau_test = subjects_params.loc[subjects_params['denekId']==idx, 'tau']
 choices_real = all_subjects.loc[all_subjects['denekId'] == idx, 'yatirim'].to_numpy()

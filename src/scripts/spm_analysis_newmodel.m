@@ -11,21 +11,22 @@ dirlist = dir(datadir2);
 S = readtable('/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv', 'Delimiter', ',');
 % Preparing Aslihan's data to merge with elifozge
 subj = S(52:end,"name");
-pe_table = readtable('/Users/kaankeskin/projects/sch_pe/data/processed/pe_norm.csv');
+pe_table = readtable('/Users/kaankeskin/projects/sch_pe/data/processed/wide_trial_pe.csv');
 
 
 spm('Defaults', 'fMRI');
 spm_jobman('initcfg');
 
 tic
-for i= 44:numel(S.name) % Subject's name
+for i= 42:numel(pe_table.denekId) % Subject's name
 
-    if i == 39 || i==74 || i==44 %ecemyilmaz 74 has 3 more TR?
-        disp('Breaking loop because i == 39');
-        continue;  % Stops the loop when i reaches 39
+    %if i == 39 || i==74 || i==44 %ecemyilmaz 74 has 3 more TR? - S.name numbers
+    if i == 17 || i==63  
+        disp('Breaking loop to skip subject');
+        continue;  
     end
      
-    display(['Working on: ' S.name{i} ]);
+    display(['Working on:' int2str(pe_table.denekId(i)) ]);
     
     %%% yeni hastalar icin bu ve alttaki bolumu ac %%%
     
@@ -50,16 +51,17 @@ for i= 44:numel(S.name) % Subject's name
 %     cd(originalpath) % go to the main path
     
     
-    %data_path = [datadir dirlist(i).name '/functional/rest/'];
-    if i < 52
-        data_path = [datadir S.name{i} '/functional/task/'];
-        data_path_s = [datadir S.name{i}  '/structural/'];
-        f_path = [f_output S.name{i}  '/task/'];
+    result_name = S.name{S.task_id == pe_table.denekId(i)};
+
+    if i < 42
+        data_path = [datadir result_name '/functional/task/'];
+        data_path_s = [datadir result_name  '/structural/'];
+        f_path = [f_output result_name  '/task/'];
         mkdir(f_path); 
     else
-        data_path = [aslihan_path subj.name{i-51} '/preprocessed/'];
-        data_path_s = [aslihan_path subj.name{i-51} '/preprocessed/'];
-        f_path = [f_output subj.name{i-51} '/task/'];
+        data_path = [aslihan_path subj.name{i-41} '/preprocessed/'];
+        data_path_s = [aslihan_path subj.name{i-41} '/preprocessed/'];
+        f_path = [f_output subj.name{i-41} '/task/'];
         mkdir(f_path); 
     end
    
@@ -176,8 +178,8 @@ for i= 44:numel(S.name) % Subject's name
         jobs{1}.spm.stats.fmri_spec.timing.units = 'secs';
 
         % 2. Extract PE values for the specific subject
-        sub_pe_row = pe_table(pe_table.denekId == S.task_id(i), :);
-        sub_pe_values = table2array(sub_pe_row(1, 2:end)); % 60 values
+        sub_pe_row = pe_table(i,:);
+        sub_pe_values = table2array(sub_pe_row(1, 3:end)); % 60 values
 
         % 3. Update conditions with 20 onsets and add PMOD
         resp_indices = [4, 10, 16]; % Response_1, Response_2, Response_3
