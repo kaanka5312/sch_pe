@@ -15,10 +15,13 @@ def run_task(script_path):
     return subprocess.run([sys.executable, script_path], capture_output=True, text=True, env=env)
 
 # 3. Run it using absolute paths
+# Control analysis that does the model recover parameters succesfully
+run_task('./recovery_grid.py')
 # Fits basic RL model 
 run_task('./model_fitting_grid.py')
 # Checking subjects fit for visualization
 run_task('./PPC_RL.py')
+# Comparison between adaptive alpha and fixed alpha
 run_task('./wsls.py')
 run_task('./model_cemre.py')
 
@@ -54,7 +57,7 @@ def main():
     v_raw_list, v_norm_list = [], []
     for subj in mix_subjects:
         print(f"Fitting Subject: {subj}")
-        subj_data = all_merged[all_merged['denekId'] == subj]
+       subj_data = all_merged[all_merged['denekId'] == subj]
         # 2. Prepare choice and rewards
         # Ensure these column names match your CSV headers
         choices = subj_data['secim'].values 
