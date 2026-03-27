@@ -1,4 +1,3 @@
-# This script includes in functions 
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
@@ -18,7 +17,7 @@ def compute_neg_log_posterior(params, choices, rewards):
     prior_alpha = beta.logpdf(alpha, 1.1, 1.1)
     
     # Tau pozitif olmalı ve çok büyük değerler cezalandırılmalı
-    prior_tau = gamma.logpdf(tau, 2, scale=1)
+    prior_tau = gamma.logpdf(tau, 2.5, scale=2.5)
     
     # Toplam Hata = Neg_LL - (Log_Priors)
     # (Eksi olmasının sebebi minimize ettiğimiz için; olasılığı maksimize etmek, negatifini minimize etmektir)
@@ -31,7 +30,7 @@ def fit_subject_parameters_map(choices, rewards):
     # çünkü prior onu zaten ortalarda tutmaya çalışacak.
     res = minimize(compute_neg_log_posterior, x0=[0.2, 2.0], 
                    args=(choices, rewards), 
-                   bounds=[(1e-5, 1), (0.01, 20.0)], method='L-BFGS-B')
+                   bounds=[(1e-5, 1), (0.01, 60.0)], method='L-BFGS-B')
     
     return res.x # [alpha_map, tau_map]
 """
@@ -64,9 +63,9 @@ def compute_log_likelihood(params, choices, rewards):
 def compute_log_likelihood(params, choices, rewards):
     alpha, tau = params
     # Önemli: Ham ödülleri (20, 60, 0) burada bir kez normalize ediyoruz
-    r_norm = rewards / 20.0
-    v_safe = 1.0   # 20 TL / 10
-    v = 1.0        # Başlangıç (Nötr)
+    r_norm = rewards / 60.0
+    v_safe = 20.0/60.0   # 20 TL / 10
+    v = 20.0/60.0        # Başlangıç (Nötr)
     
     neg_ll = 0
     eps = 1e-10
@@ -85,17 +84,17 @@ def fit_subject_parameters(choices, rewards):
     # Bounds: Alpha [0, 1], Tau [0, 20]
     res = minimize(compute_log_likelihood, x0=[0.5, 1.0], 
                    args=(choices, rewards), 
-                   bounds=[(0, 1), (0.001, 1)], method='L-BFGS-B')
+                   bounds=[(0, 1), (0.001, 60)], method='L-BFGS-B')
     return res.x # returns [alpha, tau]
 
 def fit_subject_parameters_robust(choices, rewards):
     best_res = None
     # Farklı Tau başlangıç noktalarıyla dene: 0.1, 1.0, 10.0
-    for start_tau in [0.1, 1.0, 5.0]:
+    for start_tau in [0.5, 4.5, 10.0]:
         res = minimize(compute_log_likelihood, 
                        x0=[0.2, start_tau], # Alpha 0.2, Tau değişken
                        args=(choices, rewards), 
-                       bounds=[(0, 1), (0.001, 10.0)], 
+                       bounds=[(0, 1), (0.001, 30.0)], 
                        method='L-BFGS-B')
         
         if best_res is None or res.fun < best_res.fun:
@@ -103,10 +102,36 @@ def fit_subject_parameters_robust(choices, rewards):
             
     return best_res.x
 
+def fit_subject_parameters_map_robust(choices, rewards):
+    """Alpha ve Tau'yu MAP estimation kullanarak ÇOKLU BAŞLANGIÇ ile fit eder."""
+    best_res = None
+    
+    # Try 3 different starting points to prevent getting stuck in local minima
+    # [alpha, tau] pairs
+    starting_points = [
+        [0.1, 1.5], 
+        [0.5, 4.5], 
+        [0.9, 10.0]
+    ]
+    
+    # Note: Beta logpdf can break exactly at 0 or 1, so we use 1e-5 and 0.99999
+    bnds = [(1e-5, 0.99999), (0.01, 30.0)]
+    
+    for start_params in starting_points:
+        res = minimize(compute_neg_log_posterior, x0=start_params, 
+                       args=(choices, rewards), 
+                       bounds=bnds, method='L-BFGS-B')
+        
+        # Keep the result with the lowest negative log posterior
+        if best_res is None or res.fun < best_res.fun:
+            best_res = res
+            
+    return best_res.x # Returns the best [alpha_map, tau_map]
+
 def generate_rl_signals(alpha, choices, rewards):
     """Fitted alpha ile trial-by-trial PE ve Value sinyallerini üretir."""
-    v = 2.0         # NORMALIZE: 20 yerine 2.0
-    r_norm = rewards / 10.0
+    v = 20.0/60.0        # NORMALIZE: 20 yerine 2.0
+    r_norm = rewards / 60.0 # Normalized according to max reward 
     pe_history = []
     v_history = []
     
@@ -125,8 +150,8 @@ def generate_rl_signals(alpha, choices, rewards):
 def simulate_behavior_recovery(alpha, tau, num_trials=60):
     # Simülasyon kendi içinde normalize (2.0) çalışır ama dışarıya 
     # gerçek görevdeki gibi ham (20, 60, 0) ödülleri verir.
-    v = 2.0
-    v_safe = 2.0
+    v = 20.0/60.0
+    v_safe = 20.0/60.0
     choices = []
     rewards_raw = []
     
@@ -144,14 +169,14 @@ def simulate_behavior_recovery(alpha, tau, num_trials=60):
         rewards_raw.append(reward)
         
         if choice == 1:
-            v = v + alpha * ((reward/10.0) - v)
+            v = v + alpha * ((reward/60.0) - v)
             
     return np.array(choices), np.array(rewards_raw)
 
-def simulate_behavior_ppc(alpha, tau, rewards, v_init=1.0, v_safe=1.0):
+def simulate_behavior_ppc(alpha, tau, rewards, v_init= 20.0/60.0, v_safe=20.0/60.0):
     """Subject'in parametreleri ile normalize ölçekte yapay kararlar üretir."""
     n_trials = len(rewards)
-    r_norm = rewards / 20.0
+    r_norm = rewards / 60.0
     choices = np.zeros(n_trials)
     v = v_init
     
