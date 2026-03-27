@@ -64,9 +64,9 @@ def compute_log_likelihood(params, choices, rewards):
 def compute_log_likelihood(params, choices, rewards):
     alpha, tau = params
     # Önemli: Ham ödülleri (20, 60, 0) burada bir kez normalize ediyoruz
-    r_norm = rewards / 10.0
-    v_safe = 2.0   # 20 TL / 10
-    v = 2.0        # Başlangıç (Nötr)
+    r_norm = rewards / 20.0
+    v_safe = 1.0   # 20 TL / 10
+    v = 1.0        # Başlangıç (Nötr)
     
     neg_ll = 0
     eps = 1e-10
@@ -148,10 +148,10 @@ def simulate_behavior_recovery(alpha, tau, num_trials=60):
             
     return np.array(choices), np.array(rewards_raw)
 
-def simulate_behavior_ppc(alpha, tau, rewards, v_init=2.0, v_safe=2.0):
+def simulate_behavior_ppc(alpha, tau, rewards, v_init=1.0, v_safe=1.0):
     """Subject'in parametreleri ile normalize ölçekte yapay kararlar üretir."""
     n_trials = len(rewards)
-    r_norm = rewards / 10.0
+    r_norm = rewards / 20.0
     choices = np.zeros(n_trials)
     v = v_init
     

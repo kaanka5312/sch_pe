@@ -2,47 +2,37 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from model_functions import compute_log_likelihood, simulate_behavior_ppc
-
 import os
 import sys
-
 env = os.environ.copy()
 env["PYTHONIOENCODING"] = "utf-8"
 # %% 1. AYARLAR & GRID TANIMI
 PROJECT_FOLDER = 'C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
 n_iterations = 30  # Her parametre çifti için kaç simülasyon yapılacağı
 n_trials = 60      # Gerçek görevdeki trial sayısı
-
 # Fitting için kullanılan grid (Senin koddaki ile aynı olmalı)
 alpha_grid = np.linspace(0.001, 1.0, 100)
 tau_grid = np.linspace(0.01, 5.0, 100)
-
 # Test edilecek "Gerçek" (Ground Truth) parametreler
 true_alphas = [0.1, 0.3, 0.5, 0.7, 0.9]
 true_taus = [0.5, 1.5, 3.0] # Tau'nun farklı seviyelerini de test etmek önemli
-
 recovery_results = []
 
 # %% 2. SIMÜLASYON VE RECOVERY DÖNGÜSÜ
 print(f"Recovery başlıyor: Toplam {len(true_alphas) * len(true_taus) * n_iterations} simülasyon...")
-
 for a_true in true_alphas:
     for t_true in true_taus:
         print(f"Testing True Alpha: {a_true}, True Tau: {t_true}")
-        
         for i in range(n_iterations):
             # A. VERİ ÜRETİMİ (GROUND TRUTH)
             # Yapay bir ödül dizisi oluştur (%70 Paylaşma olasılığı olan 60 trial)
             # Ödüller: 60 TL (Share), 20 TL (Keep), 0 TL (Take-all)
             fake_rewards = np.random.choice([60, 0], size=n_trials, p=[0.7, 0.3])
-            
             # Subject bu ödüllere göre karar veriyor (simulate_behavior_ppc kullanıyoruz)
             sim_choices = simulate_behavior_ppc(alpha=a_true, tau=t_true, rewards=fake_rewards)
-            
             # B. FITTING (BRUTE-FORCE GRID SEARCH)
             best_nll = np.inf
             recovered_params = (0, 0)
-            
             # Senin grid search mantığın
             for a_fit in alpha_grid:
                 for t_fit in tau_grid:
@@ -51,7 +41,6 @@ for a_true in true_alphas:
                     if current_nll < best_nll:
                         best_nll = current_nll
                         recovered_params = (a_fit, t_fit)
-            
             # C. SONUÇLARI KAYDET
             recovery_results.append({
                 'true_alpha': a_true,
@@ -59,12 +48,10 @@ for a_true in true_alphas:
                 'rec_alpha': recovered_params[0],
                 'rec_tau': recovered_params[1]
             })
-
 recovery_df = pd.DataFrame(recovery_results)
 
 # %% 3. GÖRSELLEŞTİRME (ALPHA RECOVERY)
 plt.figure(figsize=(12, 5))
-
 # Alpha Plot
 plt.subplot(1, 2, 1)
 plt.scatter(recovery_df['true_alpha'], recovery_df['rec_alpha'], alpha=0.3, color='blue')
@@ -73,7 +60,6 @@ plt.title(f'Alpha Recovery (Trials={n_trials})')
 plt.xlabel('True Alpha')
 plt.ylabel('Recovered Alpha')
 plt.legend()
-
 # Tau Plot
 plt.subplot(1, 2, 2)
 plt.scatter(recovery_df['true_tau'], recovery_df['rec_tau'], alpha=0.3, color='green')
@@ -82,9 +68,8 @@ plt.title(f'Tau Recovery (Trials={n_trials})')
 plt.xlabel('True Tau')
 plt.ylabel('Recovered Tau')
 plt.legend()
-
 plt.tight_layout()
-plt.savefig(PROJECT_FOLDER + 'results/figures/parameter_recovery_grid.png')
+#plt.savefig(PROJECT_FOLDER + 'results/figures/parameter_recovery_grid.png')
 plt.show()
 
 # Korelasyonları Yazdır
@@ -169,18 +154,23 @@ for a_true in true_alphas:
 # Create DataFrame
 recovery_df = pd.DataFrame(recovery_data, columns=['true_alpha', 'true_tau', 'rec_alpha', 'rec_tau'])
 
-# %% 4. RESULTS & VISUALIZATION
-alpha_r, _ = pearsonr(recovery_df['true_alpha'], recovery_df['rec_alpha'])
-tau_r, _ = pearsonr(recovery_df['true_tau'], recovery_df['rec_tau'])
-
-print(f"\nRecovery Results:")
-print(f"Alpha Pearson r: {alpha_r:.3f}")
-print(f"Tau Pearson r: {tau_r:.3f}")
 
 # Save results
 if not os.path.exists(os.path.dirname(SAVE_PATH)):
     os.makedirs(os.path.dirname(SAVE_PATH))
 recovery_df.to_csv(SAVE_PATH, index=False)
+
+# ======== Plotting and Statistical Reporting ######
+from scipy.stats import pearsonr
+#recovery_df = pd.read_csv(SAVE_PATH)
+recovery_df = pd.read_csv(PROJECT_FOLDER + 'data/processed/parameter_recovery_results.csv')
+
+# %% 4. RESULTS & VISUALIZATION
+alpha_r, _ = pearsonr(recovery_df['true_alpha'], recovery_df['rec_alpha'])
+tau_r, _ = pearsonr(recovery_df['true_tau'], recovery_df['rec_tau'])
+print(f"\nRecovery Results:")
+print(f"Alpha Pearson r: {alpha_r:.3f}")
+print(f"Tau Pearson r: {tau_r:.3f}")
 
 # Plotting
 plt.figure(figsize=(12, 5))
@@ -189,12 +179,11 @@ plt.scatter(recovery_df['true_alpha'], recovery_df['rec_alpha'], alpha=0.3, colo
 plt.plot([0, 1], [0, 1], 'r--', label='Identity')
 plt.title(f'Alpha Recovery (r={alpha_r:.2f})')
 plt.xlabel('True Alpha') ; plt.ylabel('Recovered Alpha')
-
+# Sub2
 plt.subplot(1, 2, 2)
 plt.scatter(recovery_df['true_tau'], recovery_df['rec_tau'], alpha=0.3, color='green')
 plt.plot([0, 5], [0, 5], 'r--', label='Identity')
 plt.title(f'Tau Recovery (r={tau_r:.2f})')
 plt.xlabel('True Tau') ; plt.ylabel('Recovered Tau')
-
 plt.tight_layout()
 plt.show()
