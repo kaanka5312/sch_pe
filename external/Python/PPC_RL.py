@@ -9,7 +9,7 @@ all_subjects=pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
 subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/final_group_parameters.csv')
 
 # %%
-idx = 15
+idx = 28 
 alpha_test = subjects_params.loc[subjects_params['denekId']==idx, 'alpha']
 tau_test = subjects_params.loc[subjects_params['denekId']==idx, 'tau']
 choices_real = all_subjects.loc[all_subjects['denekId'] == idx, 'yatirim'].to_numpy()
@@ -23,16 +23,17 @@ alpha_val = alpha_test.item() if hasattr(alpha_test, 'item') else alpha_test[0]
 tau_val = tau_test.item() if hasattr(tau_test, 'item') else tau_test[0]
 
 # 2. İçsel Olasılık Hesaplama Fonksiyonu (DÜZELTİLMİŞ)
-def get_latent_probabilities(alpha, tau, choices, rewards, v_init=2.0, v_safe=2.0):
+def get_latent_probabilities(alpha, tau, choices, rewards):
     """
     Deneğin parametrelerine göre her trial'daki içsel olasılığı hesaplar.
     Önemli: Sadece yatırım yapılan turlarda V güncellenir.
     """
     n_trials = len(rewards)
     p_trajectories = np.zeros(n_trials)
-    v = v_init
-    # Ödülleri normalize et (20, 60, 0 -> 2, 6, 0)
-    rewards_norm = rewards / 10.0
+    # Doğru başlangıç değerleri ve normalizasyon
+    v = 20.0 / 60.0
+    v_safe = 20.0 / 60.0
+    rewards_norm = rewards / 60.0
     for t in range(n_trials):
         # 1. Mevcut V değerine göre yatırım olasılığını kaydet
         prob_invest = 1 / (1 + np.exp(-tau * (v - v_safe)))
@@ -101,28 +102,22 @@ if pseudo_r2 < 0.05:
 
 
 # Hatanın trial trial dökümü
-v = 2.0
-v_safe = 2.0
-r_norm = kazanc_clean / 10.0
+v = 20.0 / 60.0
+v_safe = 20.0 / 60.0
+r_norm = kazanc_clean / 60.0
 total_nll = 0
-
 print(f"{'Trial':<6} | {'Choice':<6} | {'V':<6} | {'P_Invest':<8} | {'NLL_inc':<8}")
 print("-" * 45)
-
 for t in range(len(choices_clean)):
     # Softmax olasılığı
     prob_invest = 1 / (1 + np.exp(-tau_val * (v - v_safe)))
-    
     # Gerçekleşen seçimin olasılığı
     p_actual = prob_invest if choices_clean[t] == 1 else (1 - prob_invest)
     nll_inc = -np.log(p_actual + 1e-10)
     total_nll += nll_inc
-    
     print(f"{t+1:<6} | {choices_clean[t]:<6.0f} | {v:<6.2f} | {prob_invest:<8.3f} | {nll_inc:<8.2f}")
-    
     # Güncelleme
     if choices_clean[t] == 1:
         v = v + alpha_val * (r_norm[t] - v)
-
 print("-" * 45)
 print(f"Toplam NLL: {total_nll:.2f}")

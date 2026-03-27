@@ -1,3 +1,8 @@
+# PRELUDE 
+"""
+In this script it named as grid, because it was using grid approximation in the beginning. 
+But now it uses MAP.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd

@@ -7,56 +7,52 @@ from scipy.stats import mannwhitneyu
 from model_functions import compute_log_likelihood, compute_null_log_likelihood_chance
 from scipy.stats import permutation_test
 # %% PATHS & DATA LOADING
-PROJECT_FOLDER = 'C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
-#PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
+#PROJECT_FOLDER = 'C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
+PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
 all_subjects = pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
 subj_list = pd.read_csv(PROJECT_FOLDER + 'data/raw/subjects_list.csv') # denekId ve group sütunları olmalı
 
-# %% BRUTE-FORCE GRID SEARCH
-# Hassasiyeti artırmak için 100x100'lük bir ızgara
-alpha_grid = np.linspace(0.001, 1.0, 100)
-tau_grid = np.linspace(0.01, 5.0, 100)
-
+# %% ROBUST MAP ESTIMATION (REPLACES GRID SEARCH)
+# Import your new robust function at the top of your script if you haven't already:
+from model_functions import fit_subject_parameters_map_robust
 final_results = []
-
-print("Brute-force optimizasyon başlıyor (Bu işlem biraz zaman alabilir)...")
+print("Robust MAP optimizasyonu başlıyor (Çoklu Başlangıç Noktaları ile)...")
 for idx in all_subjects['denekId'].unique():
     subj_data = all_subjects[all_subjects['denekId'] == idx]
     choices = subj_data['yatirim'].to_numpy()
     outcomes = subj_data['kazanc'].to_numpy()
-    
+    # 1. Null Likelihood Hesapla (Pseudo R2 için)
     null_nll = compute_null_log_likelihood_chance(choices)
-    best_nll = np.inf
-    best_params = (0, 0)
-    
-    # Grid Search Döngüsü
-    for a in alpha_grid:
-        for t in tau_grid:
-            current_nll = compute_log_likelihood([a, t], choices, outcomes)
-            if current_nll < best_nll:
-                best_nll = current_nll
-                best_params = (a, t)
-    
-    # R2 ve Sonuçlar
+    # 2. Robust MAP Fitting (Grid Search yerine)
+    try:
+        # Fonksiyon sana best_alpha ve best_tau döndürecek
+        best_params = fit_subject_parameters_map_robust(choices, outcomes)
+        best_alpha = best_params[0]
+        best_tau = best_params[1]
+        # 3. Bulunan parametrelerle Log-Likelihood hesapla (SADECE Likelihood, Prior'suz)
+        # Neden? Çünkü R2 hesaplamasında prior'ı değil, veriye olan saf uyumu kullanmalıyız.
+        best_nll = compute_log_likelihood([best_alpha, best_tau], choices, outcomes)
+    except Exception as e:
+        print(f"Denek {idx} için optimizasyon çöktü: {e}")
+        best_alpha, best_tau, best_nll = np.nan, np.nan, np.nan
+    # 4. R2 ve Sonuçları Kaydet
     pseudo_r2 = 1 - (best_nll / null_nll)
     final_results.append({
         'denekId': idx,
-        'alpha': best_params[0],
-        'tau': best_params[1],
+        'alpha': best_alpha,
+        'tau': best_tau,
         'pseudo_r2': pseudo_r2,
         'nll': best_nll
     })
-
 # Listeyi DataFrame'e donustur 
 res_df = pd.DataFrame(final_results)
-
-#Negatif Pseudo R2 değerine sahip (model dışı) denekleri ayıkla
+# Negatif Pseudo R2 değerine sahip (model dışı) denekleri ayıkla
+# NaN değerleri (çöken fitler) de burada otomatik olarak temizlenmiş olur
 res_df = res_df[res_df['pseudo_r2'] >= 0].copy()
  
 # %% GROUP MERGING & STATS
 # 1. Sütun isimlerindeki gizli boşlukları temizleyelim (strip)
 subj_list.columns = subj_list.columns.str.strip()
-
 # 2. Merged işlemini düzeltelim
 # res_df içindeki 'denekId' ile subj_list içindeki 'subj' sütununu eşleştiriyoruz.
 # (Eğer denek numaraların 'task-id' sütununda ise right_on='task-id' yapabilirsin)
@@ -71,7 +67,6 @@ stats_results = {}
 for col in ['alpha', 'tau', 'pseudo_r2']:
     g_hc = merged_df[merged_df['group'] == 0][col]
     g_sz = merged_df[merged_df['group'] == 1][col]
-    
     # Boş küme kontrolü (Eşleşme hatası varsa önlemek için)
     if len(g_hc) > 0 and len(g_sz) > 0:
         stat, p = mannwhitneyu(g_hc, g_sz)
