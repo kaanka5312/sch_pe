@@ -13,19 +13,10 @@ env["PYTHONIOENCODING"] = "utf-8"
 
 def run_task(script_path):
     return subprocess.run([sys.executable, script_path], capture_output=True, text=True, env=env)
-
-# 3. Run it using absolute paths
-# Control analysis that does the model recover parameters succesfully
-run_task('./recovery_grid.py')
-# Fits basic RL model 
-run_task('./model_fitting_grid.py')
-# Checking subjects fit for visualization
-run_task('./PPC_RL.py')
-# Comparison between adaptive alpha and fixed alpha
-run_task('./wsls.py')
-run_task('./model_cemre.py')
-
-# %% This part is fitting new RL model to data 
+# %% =====================================================================
+#  STAGE 1: DATA PREPERATION
+# =====================================================================
+# =====================================================================
 # Setup paths
 DATA_CSV = '/Users/kaankeskin/projects/sch_pe/data/raw/response.csv'
 ASL_FILTERED = '/Users/kaankeskin/projects/sch_pe/data/processed/aslihan_filtered.csv'
@@ -47,51 +38,32 @@ df_asl[['kazanc', 'toplam']] *= 2
 all_merged = pd.concat([df_ozge,df_asl], axis=0, ignore_index=True)
 pd.DataFrame(all_merged).to_csv('/Users/kaankeskin/projects/sch_pe/data/processed/all_subjects.csv', index=False)
 
-# %% This part is to run the analysis
-mix_subjects = np.unique(all_merged['denekId'])
-def main():
-    # 1. Load the behavioral data
-    # This list will store a dictionary for every subject
-    param_list = []
-    pe_raw_list, pe_norm_list = [], []
-    v_raw_list, v_norm_list = [], []
-    for subj in mix_subjects:
-        print(f"Fitting Subject: {subj}")
-       subj_data = all_merged[all_merged['denekId'] == subj]
-        # 2. Prepare choice and rewards
-        # Ensure these column names match your CSV headers
-        choices = subj_data['secim'].values 
-        outcomes = subj_data['kazanc'].values
-        # 3. MLE Parameter Fitting
-        # This calls the function you defined in model_functions.py
-        print(f"Subject {subj} - Unique outcomes: {np.unique(outcomes)}")
-        alpha, tau = fit_subject_parameters_map(choices, outcomes)
-        param_list.append({'denekId': subj, 'alpha': alpha, 'tau': tau})
-        # 4. Generate trial-by-trial RL signals (PE and Value)
-        # Using the updated function name from your model_functions.py
-        pe_raw, v_raw = generate_rl_signals(alpha, choices, outcomes)
-        # 5. Normalize & Save for fMRI
-        # Maps signals to [-1, 1] as required for the GLM
-        pe_norm = normalize_to_fmri(pe_raw)
-        v_norm = normalize_to_fmri(v_raw)
-        # 4. Collect for CSVs
-        pe_raw_list.append({'denekId': subj, 'vector': pe_raw})
-        pe_norm_list.append({'denekId': subj, 'vector': pe_norm})
-        v_raw_list.append({'denekId': subj, 'vector': v_raw})
-        v_norm_list.append({'denekId': subj, 'vector': v_norm})
-    # Save 1: Parameters
-    pd.DataFrame(param_list).to_csv('/Users/kaankeskin/projects/sch_pe/data/processed/model_parameters.csv', index=False)
-    # Save 2-5: Vectors in Wide Format
-    format_as_wide_csv(pe_raw_list, '/Users/kaankeskin/projects/sch_pe/data/processed/pe_raw.csv')
-    format_as_wide_csv(pe_norm_list, '/Users/kaankeskin/projects/sch_pe/data/processed/pe_norm.csv')
-    format_as_wide_csv(v_raw_list, '/Users/kaankeskin/projects/sch_pe/data/processed/v_raw.csv')
-    format_as_wide_csv(v_norm_list, '/Users/kaankeskin/projects/sch_pe/data/processed/v_norm.csv')
-    print("All CSVs generated successfully.")
+# %% =====================================================================
+#  STAGE 2: Computational Analysis
+# This part runs respective scripts for the computational analysis
+# =====================================================================
+# Control analysis that does the model recover parameters succesfully
+run_task('./recovery_MAP.py')
+# Fits basic RL model 
+run_task('./model_fitting_MAP.py')
+# Checking subjects fit for visualization
+run_task('./PPC_RL.py')
+# Calculates win-stay-lose-shift 
+run_task('./wsls.py')
+# Comparison between adaptive alpha and fixed alpha
+run_task('./model_cemre.py')
+# Creating PE's for the fMRI analyiss 
+run_task('./pe_regressor.py')
 
-# %% This part is for comparing the parameters between clinical groups statistics 
-# 2. NOW CALL THE COMPARISON SCRIPT
-run_group_stats(params_csv='/Users/kaankeskin/projects/sch_pe/data/processed/model_parameters.csv', 
-                    subjects_csv='/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv')
+# %% =====================================================================
+#  STAGE 3: Statistical Analysis for computational parameters 
+# =====================================================================
+# Comparison of model parameters (also somewhat in model_fitting_MAP)
+# This extra includes potential covariates and lineer models.
+run_task('./model_parameteres_statistic.py')
+# Prediction Error comparison between groups and potential covariates 
+# using lineer mixed model.
+run_task('./PE_statistics.py')
 
 if __name__ == "__main__":
     main()

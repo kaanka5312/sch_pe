@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 from model_functions import compute_log_likelihood, compute_null_log_likelihood_chance
-from scipy.stats import permutation_test
+from scipy.stats import permutation_test, levene
 # %% PATHS & DATA LOADING
 #PROJECT_FOLDER = 'C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
 PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
@@ -46,9 +46,13 @@ for idx in all_subjects['denekId'].unique():
     })
 # Listeyi DataFrame'e donustur 
 res_df = pd.DataFrame(final_results)
+
+# Bu aslinda cok mantikli degil o yuzden kaldirdim. Zaten modele gore hareket
+# etmemis katilimcilarin da degerleri burada olmali ki model paremeterlerini
+# gruplar arasinda karsilastirabilelim.
 # Negatif Pseudo R2 değerine sahip (model dışı) denekleri ayıkla
 # NaN değerleri (çöken fitler) de burada otomatik olarak temizlenmiş olur
-res_df = res_df[res_df['pseudo_r2'] >= 0].copy()
+# res_df = res_df[res_df['pseudo_r2'] >= 0].copy()
  
 # %% GROUP MERGING & STATS
 # 1. Sütun isimlerindeki gizli boşlukları temizleyelim (strip)
@@ -60,6 +64,9 @@ merged_df = res_df.merge(subj_list[['task-id', 'group']],
                          left_on='denekId', 
                          right_on='task-id', 
                          how='inner')
+exclude_ids = [9, 44, 77]
+# Merge data (Inner join)
+merged_df = merged_df[~merged_df['denekId'].isin(exclude_ids)].copy()
 
 # 3. İstatistik döngüsünü de temizlenen isimlere göre güncelleyelim
 # Mann withney u ile kiyaslama 
@@ -74,6 +81,28 @@ for col in ['alpha', 'tau', 'pseudo_r2']:
     else:
         print(f"Uyarı: {col} için grup verisi eksik (HC: {len(g_hc)}, SZ: {len(g_sz)})")
         stats_results[col] = np.nan
+
+# Varyansların (dağılım genişliğinin) eşitliğini Levene Testi ile kıyaslama
+levene_results = {}
+print("\n--- LEVENE TESTİ (VARYANS EŞİTLİĞİ) ---")
+print(f"{'Parametre':<10} | {'HC Variance':<12} | {'SZ Variance':<12} | {'Levene p-val':<10}")
+print("-" * 60)
+for col in ['alpha', 'tau', 'pseudo_r2']:
+    # Dropna() eklemek iyi bir alışkanlıktır, eksik veriler testi bozmasın
+    g_hc = merged_df[merged_df['group'] == 0][col].dropna()
+    g_sz = merged_df[merged_df['group'] == 1][col].dropna()
+    # Boş küme kontrolü
+    if len(g_hc) > 0 and len(g_sz) > 0:
+        # Levene Testini çalıştır
+        stat, p = levene(g_hc, g_sz)
+        levene_results[col] = p
+        # Gerçek varyans değerlerini hesapla (ddof=1 örneklem varyansı için)
+        hc_var = np.var(g_hc, ddof=1)
+        sz_var = np.var(g_sz, ddof=1)
+        print(f"{col:<10} | {hc_var:<12.4f} | {sz_var:<12.4f} | {p:<10.4f}")
+    else:
+        print(f"Uyarı: {col} için grup verisi eksik (HC: {len(g_hc)}, SZ: {len(g_sz)})")
+        levene_results[col] = np.nan
 
 # %% Non-parametrik olarak kiyaslama
 # 1. Test istatistiğini tanımlayalım (İki grup ortalaması arasındaki fark)
@@ -103,16 +132,20 @@ for col in ['alpha', 'tau', 'pseudo_r2']:
         stats_results[col] = np.nan
 
 # %% VISUALIZATION (BOXPLOTS)
-fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+# 1. Apply the global formatting (fonts, axes, sizes)
+from config import GROUP_COLORS # Imports your dictionary!
+plt.style.use('./paper_theme.mplstyle')
+group_mapping = {0 : 'HC', 1 : 'SZ'}
+merged_df['group'] = merged_df['group'].replace(group_mapping)
+fig, axes = plt.subplots(1, 3, figsize=(12, 5))
 params_to_plot = ['alpha', 'tau', 'pseudo_r2']
-titles = ['Öğrenme Hızı (Alpha)', 'Karar Hassasiyeti (Tau)', 'Model Uyumu (Pseudo R2)']
+titles = ['Alpha', 'Tau', 'Pseudo R2']
 for i, param in enumerate(params_to_plot):
-    sns.boxplot(x='group', y=param, data=merged_df, ax=axes[i], palette='Set2')
+    sns.boxplot(x='group', y=param, data=merged_df, ax=axes[i], palette=GROUP_COLORS)
     sns.stripplot(x='group', y=param, data=merged_df, ax=axes[i], color='black', alpha=0.3)
     axes[i].set_title(f"{titles[i]}\n(p = {stats_results[param]:.4f})")
-    axes[i].set_xlabel("Grup")
-    axes[i].set_ylabel("Değer")
-plt.tight_layout()
+    axes[i].set_xlabel("Group")
+    axes[i].set_ylabel("Value")
 plt.savefig(PROJECT_FOLDER + 'results/figures/group_comparison_bruteforce.png')
 merged_df.to_csv(PROJECT_FOLDER + 'data/processed/final_group_parameters.csv', index=False)
 plt.show()

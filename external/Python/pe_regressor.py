@@ -5,7 +5,7 @@ import os
 from scipy.stats import zscore
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from model_functions import generate_rl_signals
 # %% PATHS & DATA LOADING
 # Kendi bilgisayar yoluna göre düzenle
 #PROJECT_FOLDER = 'C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
@@ -27,23 +27,7 @@ for idx in res_df['denekId'].unique():
     subj_data = all_subjects[all_subjects['denekId'] == idx].sort_values('sayac').copy()
     choices = subj_data['yatirim'].to_numpy()
     outcomes = subj_data['kazanc'].to_numpy()
-    # Başlangıç değerleri (Normalleştirilmiş: Keep = 1.0)
-    v = 1.0 
-    pes = []
-    values = []
-    for t in range(len(choices)):
-        # Karar anındaki beklenti (V)
-        values.append(v)
-        # PE hesapla (Rewards: 0, 20, 60 -> Normalizasyon: 0, 2.0, 6.0)
-        r_t = outcomes[t] / 10.0
-        pe_t = r_t - v
-        pes.append(pe_t)
-        # Sadece yatırım yapıldıysa beklentiyi güncelle
-        if choices[t] == 1:
-            v = v + best_alpha * pe_t
-        else:
-            # Yatırım yoksa (Keep) V değişmez
-            pass
+    pes, values = generate_rl_signals(best_alpha, choices, outcomes)
     # Hesaplanan değerleri deneğin verisine ekle
     subj_data['PE_raw'] = pes
     subj_data['V_value'] = values
@@ -57,7 +41,7 @@ for idx in res_df['denekId'].unique():
 all_trials_pe_df = pd.concat(trial_by_trial_results)
 # Grup bilgilerini tekrar ekle (Eğer all_trials_pe_df'de yoksa)
 all_trials_pe_df = all_trials_pe_df.merge(res_df[['denekId', 'group']], on='denekId', how='left')
-
+all_trials_pe_df.to_csv(PROJECT_FOLDER + 'data/processed/trial_by_trial_rawPE.csv', index=False)
 # %% EXPORT FOR fMRI
 # 1. Pivot işlemi: İndeks olarak denekId ve group, sütun olarak sayac, değer olarak PE_normalized kullanıyoruz
 # (Eğer V_value veya başka bir metriği genişletmek istersen 'values' kısmını değiştirebilirsin)
@@ -71,10 +55,19 @@ wide_pe_df.columns = [f'trial_{int(c) + 1}' for c in wide_pe_df.columns]
 wide_pe_df = wide_pe_df.reset_index()
 # Sonucu kontrol edelim ve kaydedelim
 print(wide_pe_df.head())
-wide_pe_df.to_csv(PROJECT_FOLDER + 'data/processed/wide_trial_pe.csv', index=False)
-
-# 1. Toplu CSV dosyası
-all_trials_pe_df.to_csv(PROJECT_FOLDER + 'data/processed/trial_by_trial_fmri_regressors.csv', index=False)
+wide_pe_df.to_csv(PROJECT_FOLDER + 'data/processed/wide_trial_pe_normalized.csv', index=False)
+# %% Export for statistics Raw PE as wide
+wide_pe_df = all_trials_pe_df.pivot(index=['denekId', 'group'], 
+                                    columns='sayac', 
+                                    values='PE_raw')
+# 2. Sütun isimlerini 'trial_1', 'trial_2' ... 'trial_60' şeklinde güncelleyelim
+# sayac 0-59 arasında olduğu için c+1 yapıyoruz
+wide_pe_df.columns = [f'trial_{int(c) + 1}' for c in wide_pe_df.columns]
+# 3. İndeksi sıfırlayarak 'denekId' ve 'group' bilgilerini tekrar sütun haline getirelim
+wide_pe_df = wide_pe_df.reset_index()
+# Sonucu kontrol edelim ve kaydedelim
+print(wide_pe_df.head())
+wide_pe_df.to_csv(PROJECT_FOLDER + 'data/processed/wide_trial_pe_raw.csv', index=False)
 
 # %% GÖRSELLEŞTİRME: PE Dinamiği (İlk Denek Örneği)
 sample_id = all_trials_pe_df['denekId'].iloc[0]

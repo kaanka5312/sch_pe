@@ -1,0 +1,31 @@
+# paper_theme.mplstyle
+
+# --- FIGURE PROPERTIES ---
+figure.figsize : 6, 2.5       # Exactly what you had in your code!
+figure.dpi : 300             # High resolution for journals
+figure.facecolor : white     # Pure white background
+figure.autolayout : True     # Automatically does plt.tight_layout() for you!
+
+# --- FONT & TEXT ---
+font.family : sans-serif
+font.sans-serif : Arial, Helvetica, DejaVu Sans
+font.size : 12
+axes.titlesize : 14
+axes.titleweight : bold
+axes.labelsize : 12
+
+# --- AXES & BORDERS ---
+axes.spines.top : False      # Removes the top box border
+axes.spines.right : False    # Removes the right box border
+axes.linewidth : 1.2         # Makes the remaining axes slightly thicker
+
+# --- TICKS ---
+xtick.labelsize : 10
+ytick.labelsize : 10
+xtick.direction : out
+ytick.direction : out
+
+# --- LEGEND ---
+legend.fontsize : 10
+legend.frameon : False       # Removes the ugly box around the legend
+

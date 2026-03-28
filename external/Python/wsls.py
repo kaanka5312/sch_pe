@@ -3,16 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import permutation_test
-
 # 1. VERİLERİ YÜKLE
-PROJECT_FOLDER='C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
 # Kendi bilgisayarındaki PROJECT_FOLDER yolunu kullandığından emin ol
+#PROJECT_FOLDER='C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
+PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/'
 all_subjects = pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
+# Bu su anda tum katilimcilari iceriyor modele uygun olan veya olmayan
 params_df = pd.read_csv(PROJECT_FOLDER + 'data/processed/final_group_parameters.csv')
-
 # Sadece R2 >= 0 olan (modelle uyumlu) denekleri tutalım
 all_subjects = all_subjects[all_subjects['denekId'].isin(params_df['denekId'].unique())]
-
 # %% A. 3-FAZLI R2 ANALİZİ (20-20-20 Split)
 def calculate_3phase_r2(all_subjects, params_df):
     results = []
@@ -20,27 +19,21 @@ def calculate_3phase_r2(all_subjects, params_df):
         idx, alpha, tau = row['denekId'], row['alpha'], row['tau']
         subj_data = all_subjects[all_subjects['denekId'] == idx].reset_index(drop=True)
         choices, rewards = subj_data['yatirim'].values, subj_data['kazanc'].values
-        
-        v, v_safe, eps = 2.0, 2.0, 1e-10
+        v, v_safe, eps = 20.0/60.0, 20.0/60.0, 1e-10
         trial_nlls = []
-        
         # Trial-by-trial NLL hesapla
         for t in range(len(choices)):
             prob_invest = 1 / (1 + np.exp(-tau * (v - v_safe)))
             p_actual = prob_invest if choices[t] == 1 else (1 - prob_invest)
             trial_nlls.append(-np.log(p_actual + eps))
-            
             if choices[t] == 1:
-                v = v + alpha * (rewards[t]/10.0 - v)
-        
+                v = v + alpha * (rewards[t]/60.0 - v)
         # 3 Faza Böl (20-20-20)
         # Şans düzeyi NLL (her faz için): 20 * -ln(0.5)
         null_nll_phase = -np.log(0.5) * 20
-        
         r2_p1 = 1 - (sum(trial_nlls[0:20]) / null_nll_phase)
         r2_p2 = 1 - (sum(trial_nlls[20:40]) / null_nll_phase)
         r2_p3 = 1 - (sum(trial_nlls[40:60]) / null_nll_phase)
-        
         results.append({
             'denekId': idx, 
             'r2_phase1': r2_p1, 
@@ -85,17 +78,14 @@ for m in metrics:
     res = permutation_test((g0, g1), lambda x, y: np.mean(x) - np.mean(y), 
                            permutation_type='independent', n_resamples=10000)
     p_vals[m] = res.pvalue
-
 # %% D. GÖRSELLEŞTİRME
 fig, axes = plt.subplots(2, 3, figsize=(18, 12))
 titles = ['Win-Stay', 'Loss-Shift', 'R2 Faz 1 (1-20)', 'R2 Faz 2 (21-40)', 'R2 Faz 3 (41-60)']
-
 for i, m in enumerate(metrics):
     ax = axes.flatten()[i]
     sns.boxplot(x='group', y=m, data=final_analysis_df, ax=ax, palette='Set2')
     sns.stripplot(x='group', y=m, data=final_analysis_df, ax=ax, color='black', alpha=0.3)
     ax.set_title(f"{titles[i]}\np = {p_vals[m]:.4f}")
-
 axes.flatten()[-1].axis('off') # Boş kalan son kutuyu gizle
 plt.tight_layout()
 plt.show()

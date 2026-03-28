@@ -11,17 +11,17 @@ dirlist = dir(datadir2);
 S = readtable('/Users/kaankeskin/projects/sch_pe/data/raw/subjects_list.csv', 'Delimiter', ',');
 % Preparing Aslihan's data to merge with elifozge
 subj = S(52:end,"name");
-pe_table = readtable('/Users/kaankeskin/projects/sch_pe/data/processed/wide_trial_pe.csv');
+pe_table = readtable('/Users/kaankeskin/projects/sch_pe/data/processed/wide_trial_pe_normalized.csv');
 
 
 spm('Defaults', 'fMRI');
 spm_jobman('initcfg');
 
 tic
-for i= 42:numel(pe_table.denekId) % Subject's name
+for i= 1:numel(pe_table.denekId) % Subject's name
 
     %if i == 39 || i==74 || i==44 %ecemyilmaz 74 has 3 more TR? - S.name numbers
-    if i == 17 || i==63  
+    if i == 17 || i==63  || i==20 || i==25 || i ==50 || i==73 % 20 s.kanik preprocessing files ?, b.akkoc?
         disp('Breaking loop to skip subject');
         continue;  
     end
@@ -53,15 +53,15 @@ for i= 42:numel(pe_table.denekId) % Subject's name
     
     result_name = S.name{S.task_id == pe_table.denekId(i)};
 
-    if i < 42
+    if i < 52
         data_path = [datadir result_name '/functional/task/'];
         data_path_s = [datadir result_name  '/structural/'];
         f_path = [f_output result_name  '/task/'];
         mkdir(f_path); 
     else
-        data_path = [aslihan_path subj.name{i-41} '/preprocessed/'];
-        data_path_s = [aslihan_path subj.name{i-41} '/preprocessed/'];
-        f_path = [f_output subj.name{i-41} '/task/'];
+        data_path = [aslihan_path subj.name{i-51} '/preprocessed/'];
+        data_path_s = [aslihan_path subj.name{i-51} '/preprocessed/'];
+        f_path = [f_output subj.name{i-51} '/task/'];
         mkdir(f_path); 
     end
    

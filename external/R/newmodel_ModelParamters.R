@@ -4,7 +4,7 @@ library(broom)
 library(ggpubr)
 # 1. Load Data
 # Assuming these are in your project folder
-params <- read.csv("./data/processed/model_parameters.csv")
+params <- read.csv("./data/processed/final_group_parameters.csv")
 subjects <- read.csv("./data/raw/subjects_list.csv")
 # 2. Pre-processing & Exclusion
 # Exclude subjects 9, 44, and 77
@@ -14,9 +14,9 @@ exclude_ids <- c(9, 44, 77)
 # Handle the specific spacing in your subjects_list.csv column names
 df_clean <- params %>%
   filter(!denekId %in% exclude_ids) %>%
-  inner_join(subjects, by = c("denekId" = "task.id")) %>%
+  inner_join(subjects, by = "task.id") %>%
   rename(
-    Group = group,
+    Group = group.x,
     Age = age,
     Sex = sex,
     DoI = DoI # Ensure this matches your file's spacing
@@ -30,7 +30,8 @@ df_clean <- params %>%
     Age_z = scale(as.numeric(Age)),
     AP_z = scale(as.numeric(ap)),
     education_z = scale(as.numeric(education)),
-    PANSS_neg_z = scale(as.numeric(PANSS.Negative)) 
+    PANSS_neg_z = scale(as.numeric(PANSS.Negative)),
+    DOI = as.numeric(DoI)
 )
 
   # %% Model fitting
@@ -46,10 +47,8 @@ summary(fit_tau_group)
 # 4. Model 2: Clinical Confounding (SZ Group Only)
 # Testing if Duration of Illness (DoI) predicts parameters in patients
 sz_only <- df_clean %>% filter(Group == "SZ")
-
-fit_alpha_clinical <- lm(alpha ~ DoI + Age_z + Sex, data = sz_only)
-fit_tau_clinical   <- lm(log_tau ~ DoI + Age_z + Sex, data = sz_only)
-
+fit_alpha_clinical <- lm(alpha ~ DOI + Age_z + Sex, data = sz_only)
+fit_tau_clinical   <- lm(log_tau ~ DOI + Age_z + Sex, data = sz_only)
 print("--- SZ Clinical Correlates: Alpha ---")
 summary(fit_alpha_clinical)
 
