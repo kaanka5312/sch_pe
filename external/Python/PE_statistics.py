@@ -58,7 +58,7 @@ print("Running Linear Mixed-Effects Model...")
 # 2. Run the model
 # In statsmodels, 'groups' defines the random intercept (1 | denekId)
 # C() explicitly tells statsmodels to treat the variable as categorical
-formula = "PE ~ C(Group) * C(Task) + C(sex) + Age_scaled"
+formula = "absPE ~ C(Group) * C(Task) + C(sex) + Age_scaled"
 res_model = smf.mixedlm(formula, final_df_clean, groups=final_df_clean["denekId"]).fit()
 print(res_model.summary())
 

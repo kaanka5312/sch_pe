@@ -10,7 +10,7 @@ path1='/Volumes/Elements/SoCAT/ElifOzgeSCH/SCHdata/analysis/firstlevel/';
 
 % İlgilendiğimiz tüm PE kontrastlarını döngüye alalım
 % 22: Overall, 23: Initial, 24: Late, 25: Initial > Late, 27: Phase 2 Standalone
-contrasts_to_run = [22];
+contrasts_to_run = [22,23,24,25,26,27];
 
 for c_num = contrasts_to_run
     con_name = sprintf('con_%04d.nii', c_num);
@@ -20,7 +20,7 @@ for c_num = contrasts_to_run
     all_files = cellfun(@(f) fullfile(path1, f, 'task', con_name), S.name, 'UniformOutput', false);
     
     % Hariç tutulacak deneklerin isimlerini buraya yaz (Index yerine isim daha güvenlidir)
-    exclude_names = {'b.akkoc', 's.kanik', 'u.aydin', 'ecemyilmaz', 'a.gungor', 'irembulut', 'm.tunavurgun', 'sabirekeskin', 'figenozmen'};
+    exclude_names = {'b.akkoc', 's.kanik', 'u.aydin', 'ecemyilmaz', 'a.gungor', 'irembulut', 'figenozmen'};
     keep_mask = ~ismember(S.name, exclude_names);
 
     % Filtrelenmiş Tablo ve Dosyalar
@@ -69,7 +69,7 @@ for c_num = contrasts_to_run
 end
 
 %% One sample t-test for activation 
-con_name = 'con_0022.nii';
+con_name = 'con_0027.nii';
 
 groups = {'SZ', 'HC'};
 for g = 1:2

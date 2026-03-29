@@ -70,22 +70,25 @@ wsls_res = calculate_wsls(all_subjects)
 final_analysis_df = params_df.merge(phase_res, on='denekId').merge(wsls_res, on='denekId')
 
 # %% C. İSTATİSTİK (PERMÜTASYON TESTİ)
-metrics = ['win_stay', 'loss_shift', 'r2_phase1', 'r2_phase2', 'r2_phase3']
+metrics = ['win_stay', 'loss_shift']
 p_vals = {}
 for m in metrics:
-    g0 = final_analysis_df[final_analysis_df['group'] == 0][m].dropna().values
-    g1 = final_analysis_df[final_analysis_df['group'] == 1][m].dropna().values
+    g0 = final_analysis_df[final_analysis_df['group'] == 'HC'][m].dropna().values
+    g1 = final_analysis_df[final_analysis_df['group'] == 'SZ'][m].dropna().values
     res = permutation_test((g0, g1), lambda x, y: np.mean(x) - np.mean(y), 
                            permutation_type='independent', n_resamples=10000)
     p_vals[m] = res.pvalue
+
 # %% D. GÖRSELLEŞTİRME
-fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-titles = ['Win-Stay', 'Loss-Shift', 'R2 Faz 1 (1-20)', 'R2 Faz 2 (21-40)', 'R2 Faz 3 (41-60)']
+from config import GROUP_COLORS # Imports your dictionary!
+plt.style.use('./paper_theme.mplstyle')
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+titles = ['Win-Stay', 'Loss-Shift']
 for i, m in enumerate(metrics):
     ax = axes.flatten()[i]
-    sns.boxplot(x='group', y=m, data=final_analysis_df, ax=ax, palette='Set2')
+    sns.boxplot(x='group', y=m, data=final_analysis_df, ax=ax, palette=GROUP_COLORS)
     sns.stripplot(x='group', y=m, data=final_analysis_df, ax=ax, color='black', alpha=0.3)
     ax.set_title(f"{titles[i]}\np = {p_vals[m]:.4f}")
-axes.flatten()[-1].axis('off') # Boş kalan son kutuyu gizle
 plt.tight_layout()
+plt.savefig("../../results/figures/wsls.png")
 plt.show()

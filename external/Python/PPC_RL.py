@@ -9,7 +9,7 @@ all_subjects=pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
 subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/final_group_parameters.csv')
 
 # %%
-idx = 28 
+idx =28 
 alpha_test = subjects_params.loc[subjects_params['denekId']==idx, 'alpha']
 tau_test = subjects_params.loc[subjects_params['denekId']==idx, 'tau']
 choices_real = all_subjects.loc[all_subjects['denekId'] == idx, 'yatirim'].to_numpy()
@@ -44,7 +44,7 @@ def get_latent_probabilities(alpha, tau, choices, rewards):
     return p_trajectories
 
 # 3. Güncellenmiş PPC Fonksiyonu (DÜZELTİLMİŞ)
-def plot_ppc_smooth(actual_choices, rewards, alpha, tau, n_sims=100, idx="Subject"):
+def plot_ppc_smooth(actual_choices, rewards, alpha, tau, n_sims=100, idx="Subject",PATH="../../results/figures/ppc_plot.png"):
     n_trials = len(actual_choices)
     simulated_data = np.zeros((n_sims, n_trials))
     # Simülasyonlar (Mavi alan için)
@@ -59,30 +59,33 @@ def plot_ppc_smooth(actual_choices, rewards, alpha, tau, n_sims=100, idx="Subjec
     # actual_choices'ı ekledik çünkü öğrenme buna bağlı
     latent_p = get_latent_probabilities(alpha, tau, actual_choices, rewards)
     # Görselleştirme
-    plt.figure(figsize=(12, 6))
+    plt.style.use('./paper_theme.mplstyle')
+    plt.figure(figsize=(12, 5))
     mean_sim = np.mean(sim_rolling, axis=0)
     std_sim = np.std(sim_rolling, axis=0)
     trials = np.arange(1, n_trials + 1)
     # Mavi %95 Tahmin Aralığı (Simülasyon Trendi)
     plt.fill_between(trials, mean_sim - 1.96*std_sim, mean_sim + 1.96*std_sim, 
-                     color='#3498db', alpha=0.2, label='Model %95 Simülasyon Aralığı')
-    plt.plot(trials, mean_sim, color='#2980b9', linestyle='--', alpha=0.6, label='Model Ortalama Trend')
+                     color='#3498db', alpha=0.2, label='CI 95%')
+    plt.plot(trials, mean_sim, color='#2980b9', linestyle='--', alpha=0.6, label='Model Average Trend')
     # Pürüzsüz Kırmızı Çizgi (Deneğin Parametrelerine Göre Modellenmiş Eğilimi)
-    plt.plot(trials, latent_p, color='#e74c3c', linewidth=2.5, label='Deneğin İçsel Yatırım Olasılığı (Latent)')
+    plt.plot(trials, latent_p, color='#e74c3c', linewidth=2.5, label='Subject Latent Investment Probability')
     # Ham Kararlar (Noktalar)
-    plt.scatter(trials, actual_choices, color='#c0392b', alpha=0.15, s=15, label='Gerçek Seçimler (0 veya 1)')
-    plt.title(f'Posterior Predictive Check - Denek: {idx}\n(Alpha={alpha:.3f}, Tau={tau:.2f})', fontsize=14)
+    plt.scatter(trials, actual_choices, color='#c0392b', alpha=0.15, s=15, label='Real Choices (0 or 1)')
+    plt.title(f'Posterior Predictive Check - Subject: {idx}\n(Alpha={alpha:.3f}, Tau={tau:.2f})', fontsize=14)
     plt.xlabel('Trial No', fontsize=12)
-    plt.ylabel('Yatırım Olasılığı / Oranı', fontsize=12)
+    plt.ylabel('Investment Probability', fontsize=12)
     plt.ylim(-0.05, 1.05)
     plt.legend(loc='upper left', frameon=True)
     plt.grid(axis='y', alpha=0.3)
     plt.tight_layout()
+    plt.savefig(PATH)
     plt.show()
 
 # Çalıştır
-plot_ppc_smooth(choices_clean, kazanc_clean, alpha_val, tau_val)
+plot_ppc_smooth(choices_clean, kazanc_clean, alpha_val, tau_val,idx="28",PATH="../../results/figures/ppc_bad.png")
 
+plot_ppc_smooth(choices_clean, kazanc_clean, alpha_val, tau_val,idx="15",PATH="../../results/figures/ppc_good.png")
 # %% Measuring how much subject learned 
 # 1. Get your optimized NLL from your previous fit
 # Burada MAP olan halini degil, modelin bizim varsayimlarimizi aciklamasini istemedigmizden

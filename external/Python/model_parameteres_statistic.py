@@ -47,9 +47,10 @@ df_clean['PANSS_neg_z'] = scale_z('PANSS-Negative')
 df_clean['PANSS_pos_z'] = scale_z('PANSS-Positive')
 
 # %% 3. MODEL 1: GROUP DIFFERENCES
+# NOTE : The residuals doesnt follow the gaussian distrubution, thus the assumption (See the he Omnibus and Jarque-Bera tests)
 # statsmodels automatically recognizes 'Group' as categorical because it contains strings
-fit_alpha_group = smf.ols('alpha ~ group + education_z + Age_z', data=df_clean).fit()
-fit_tau_group = smf.ols('log_tau ~ group + education_z + Age_z', data=df_clean).fit()
+fit_alpha_group = smf.ols('alpha ~ group ', data=df_clean).fit()
+fit_tau_group = smf.ols('log_tau ~ group ', data=df_clean).fit()
 print("--- Group Differences: Alpha ---")
 print(fit_alpha_group.summary())
 print("\n--- Group Differences: Tau ---")
@@ -57,8 +58,8 @@ print(fit_tau_group.summary())
 
 # %% 4. MODEL 2: CLINICAL CONFOUNDING (SZ ONLY)
 sz_only = df_clean[df_clean['group'] == 'SZ'].copy()
-fit_alpha_clinical = smf.ols('alpha ~ DOI + Age_z + sex + PANSS_pos_z', data=sz_only).fit()
-fit_tau_clinical = smf.ols('log_tau ~ DOI + Age_z + sex + PANSS_pos_z', data=sz_only).fit()
+fit_alpha_clinical = smf.ols('alpha ~ DOI +  PANSS_pos_z', data=sz_only).fit()
+fit_tau_clinical = smf.ols('log_tau ~ DOI + PANSS_pos_z', data=sz_only).fit()
 print("\n--- SZ Clinical Correlates: Alpha ---")
 print(fit_alpha_clinical.summary())
 print(fit_tau_clinical.summary())

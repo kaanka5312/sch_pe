@@ -21,7 +21,7 @@ tic
 for i= 1:numel(pe_table.denekId) % Subject's name
 
     %if i == 39 || i==74 || i==44 %ecemyilmaz 74 has 3 more TR? - S.name numbers
-    if i == 17 || i==63  || i==20 || i==25 || i ==50 || i==73 % 20 s.kanik preprocessing files ?, b.akkoc?
+    if i==20 || i==25 || i ==50 || i==73 % 20 s.kanik preprocessing files ?, b.akkoc?
         disp('Breaking loop to skip subject');
         continue;  
     end
@@ -307,10 +307,17 @@ for i= 1:numel(pe_table.denekId) % Subject's name
         jobs{1}.spm.stats.con.consess{27}.tcon.weights = w;
         jobs{1}.spm.stats.con.consess{27}.tcon.sessrep = 'none';
 
+        % --- 28) Outcome_Main_All > Jitter_Overall (ÖNERİLEN KONTROL) ---
+        % This is not needed mathematically due to ortogonalization
+        % Anlamı: "Genel olarak Sonuç (Response) ekranını görmek, sadece Jitter ekranını görmekten daha mı fazla aktivasyon yaratıyor?"
+        % Response sütunları: 4 (Phase 1), 11 (Phase 2), 18 (Phase 3)
+        % Jitter sütunları: 6 (Phase 1), 13 (Phase 2), 20 (Phase 3)
+        %jobs{1}.spm.stats.con.consess{28}.tcon.name = 'Outcome_Overall > Jitter';
+        %jobs{1}.spm.stats.con.consess{28}.tcon.weights = [0 0 0 1 0 -1 0  0 0 0 1 0 -1 0  0 0 0 1 0 -1]; 
+        %jobs{1}.spm.stats.con.consess{28}.tcon.sessrep = 'none';
+
          % Keep existing contrastss
         jobs{1}.spm.stats.con.delete = 0; 
-
-        
          
          save([data_path '09_BATCH_contrasts.mat'], 'jobs');
         spm_jobman('run', jobs);
