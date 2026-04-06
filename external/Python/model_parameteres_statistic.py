@@ -82,20 +82,22 @@ axes[1].set_ylabel('Tau (Log Scale)')
 plt.tight_layout()
 plt.show()
 
-from scipy.stats import permutation_test
-import numpy as np
 
 # %% PERMUTATION TEST: LOG_TAU (HC vs SZ)
+from scipy.stats import permutation_test
+import numpy as np
 # 1. Isolate the log_tau arrays for both groups
 hc_log_tau = df_clean[df_clean['group'] == 'HC']['log_tau'].values
 sz_log_tau = df_clean[df_clean['group'] == 'SZ']['log_tau'].values
 # 2. Define the test statistic (Difference in means)
 def diff_in_means(x, y):
     return np.mean(x) - np.mean(y)
+def diff_in_medians(x, y):
+    return np.median(x) - np.median(y)
 # 3. Run the Permutation Test (10,000 resamples for high stability)
 perm_res = permutation_test(
     (hc_log_tau, sz_log_tau), 
-    statistic=diff_in_means, 
+    statistic=diff_in_medians, 
     permutation_type='independent', 
     n_resamples=10000, 
     alternative='two-sided'

@@ -312,9 +312,9 @@ for i= 1:numel(pe_table.denekId) % Subject's name
         % Anlamı: "Genel olarak Sonuç (Response) ekranını görmek, sadece Jitter ekranını görmekten daha mı fazla aktivasyon yaratıyor?"
         % Response sütunları: 4 (Phase 1), 11 (Phase 2), 18 (Phase 3)
         % Jitter sütunları: 6 (Phase 1), 13 (Phase 2), 20 (Phase 3)
-        %jobs{1}.spm.stats.con.consess{28}.tcon.name = 'Outcome_Overall > Jitter';
-        %jobs{1}.spm.stats.con.consess{28}.tcon.weights = [0 0 0 1 0 -1 0  0 0 0 1 0 -1 0  0 0 0 1 0 -1]; 
-        %jobs{1}.spm.stats.con.consess{28}.tcon.sessrep = 'none';
+        jobs{1}.spm.stats.con.consess{28}.tcon.name = 'Outcome_Overall > Jitter';
+        jobs{1}.spm.stats.con.consess{28}.tcon.weights = [0 0 0 1 0 -1 0  0 0 0 1 0 -1 0  0 0 0 1 0 -1]; 
+        jobs{1}.spm.stats.con.consess{28}.tcon.sessrep = 'none';
 
          % Keep existing contrastss
         jobs{1}.spm.stats.con.delete = 0; 
