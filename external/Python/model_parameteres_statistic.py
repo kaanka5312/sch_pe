@@ -66,7 +66,8 @@ print(fit_tau_clinical.summary())
 
 
 # %% 5. VISUALIZATION (Equivalent to ggplot2)
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+plt.style.use('./paper_theme.mplstyle')
+fig, axes = plt.subplots(1, 2)
 # Plot 1: Alpha
 # fliersize=0 removes the standard boxplot outlier dots so they don't overlap with the jitter
 sns.boxplot(x='group', y='alpha', data=df_clean, ax=axes[0], palette='Set2', boxprops={'alpha': 0.5}, fliersize=0)
@@ -74,12 +75,12 @@ sns.stripplot(x='group', y='alpha', data=df_clean, ax=axes[0], color='black', al
 axes[0].set_title('Learning Rate (Alpha)')
 axes[0].set_ylabel(r'$\alpha$') # Supports LaTeX formatting!
 # Plot 2: Tau
-sns.boxplot(x='Group', y='tau', data=df_clean, ax=axes[1], palette='Set2', boxprops={'alpha': 0.5}, fliersize=0)
-sns.stripplot(x='Group', y='tau', data=df_clean, ax=axes[1], color='black', alpha=0.6, jitter=True)
+sns.boxplot(x='group', y='tau', data=df_clean, ax=axes[1], palette='Set2', boxprops={'alpha': 0.5}, fliersize=0)
+sns.stripplot(x='group', y='tau', data=df_clean, ax=axes[1], color='black', alpha=0.6, jitter=True)
 axes[1].set_yscale('log') # Log scale equivalent to scale_y_log10()
-axes[1].set_title('Decision Noise (Tau)')
-axes[1].set_ylabel('Tau (Log Scale)')
-plt.tight_layout()
+axes[1].set_title('Inverse Temperature(Beta)')
+axes[1].set_ylabel('Beta (Log Scale)')
+#plt.savefig("../../results/figures/")
 plt.show()
 
 

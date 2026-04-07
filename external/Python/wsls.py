@@ -79,16 +79,31 @@ for m in metrics:
                            permutation_type='independent', n_resamples=10000)
     p_vals[m] = res.pvalue
 
+# %% PRINT DESCRIPTIVE STATS FOR MANUSCRIPT (MEAN & SD)
+print("\n--- Descriptive Statistics for Manuscript ---")
+for m in metrics:
+    print(f"\n{m.upper()}:")
+    for g in ['HC', 'SZ']:
+        group_data = final_analysis_df[final_analysis_df['group'] == g][m].dropna()
+        mean_val = group_data.mean()
+        sd_val = group_data.std()
+        print(f"  {g} -> Mean: {mean_val:.2f}, SD: {sd_val:.2f}")
+print("-------------------------------------------\n")
+
 # %% D. GÖRSELLEŞTİRME
 from config import GROUP_COLORS # Imports your dictionary!
 plt.style.use('./paper_theme.mplstyle')
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+fig, axes = plt.subplots(1, 2)
 titles = ['Win-Stay', 'Loss-Shift']
+# --- 1. Define your specific Y-labels here ---
+y_labels = ['Win-Stay Probability', 'Loss-Shift Probability']
 for i, m in enumerate(metrics):
     ax = axes.flatten()[i]
     sns.boxplot(x='group', y=m, data=final_analysis_df, ax=ax, palette=GROUP_COLORS)
     sns.stripplot(x='group', y=m, data=final_analysis_df, ax=ax, color='black', alpha=0.3)
     ax.set_title(f"{titles[i]}\np = {p_vals[m]:.4f}")
+# --- 2. Apply the specific label for this loop iteration ---
+    ax.set_ylabel(y_labels[i])
 plt.tight_layout()
 plt.savefig("../../results/figures/wsls.png")
 plt.show()

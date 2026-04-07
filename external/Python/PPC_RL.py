@@ -9,7 +9,7 @@ all_subjects=pd.read_csv(PROJECT_FOLDER + 'data/processed/all_subjects.csv')
 subjects_params = pd.read_csv(PROJECT_FOLDER + 'data/processed/final_group_parameters.csv')
 
 # %%
-idx =28 
+idx = 15
 alpha_test = subjects_params.loc[subjects_params['denekId']==idx, 'alpha']
 tau_test = subjects_params.loc[subjects_params['denekId']==idx, 'tau']
 choices_real = all_subjects.loc[all_subjects['denekId'] == idx, 'yatirim'].to_numpy()
@@ -72,7 +72,7 @@ def plot_ppc_smooth(actual_choices, rewards, alpha, tau, n_sims=100, idx="Subjec
     plt.plot(trials, latent_p, color='#e74c3c', linewidth=2.5, label='Subject Latent Investment Probability')
     # Ham Kararlar (Noktalar)
     plt.scatter(trials, actual_choices, color='#c0392b', alpha=0.15, s=15, label='Real Choices (0 or 1)')
-    plt.title(f'Posterior Predictive Check - Subject: {idx}\n(Alpha={alpha:.3f}, Tau={tau:.2f})', fontsize=14)
+    plt.title(f'Posterior Predictive Check - Subject: {idx}\n(Alpha={alpha:.3f}, Beta={tau:.2f})', fontsize=14)
     plt.xlabel('Trial No', fontsize=12)
     plt.ylabel('Investment Probability', fontsize=12)
     plt.ylim(-0.05, 1.05)

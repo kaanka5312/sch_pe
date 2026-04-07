@@ -77,6 +77,7 @@ plt.show()
 
 
 # %% MODEL DIAGNOSTICS (Python Equivalents for DHARMa)
+plt.style.use('./paper_theme.mplstyle')
 # Get fitted values and residuals from the model
 fitted_vals = res_model.fittedvalues
 residuals = res_model.resid
@@ -93,6 +94,7 @@ axes[1].set_xlabel("Fitted Values")
 axes[1].set_ylabel("Residuals")
 axes[1].set_title("Residuals vs. Fitted (Dispersion Check)")
 plt.tight_layout()
+plt.savefig("../../results/figures/qqplot.png")
 plt.show()
 
 # 3. Simple Outlier Check (Standardized Residuals > 3 or < -3)

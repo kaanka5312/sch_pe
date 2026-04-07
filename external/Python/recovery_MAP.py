@@ -17,7 +17,7 @@ env["PYTHONIOENCODING"] = "utf-8"
 #PROJECT_FOLDER = 'C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/'
 PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/' 
 n_iterations = 30  # Her parametre çifti için kaç simülasyon yapılacağı
-n_trials = 300      # Gerçek görevdeki trial sayısı
+n_trials = 60      # Gerçek görevdeki trial sayısı
 # Fitting için kullanılan grid (Senin koddaki ile aynı olmalı)
 alpha_grid = np.linspace(0.001, 1.0, 100)
 tau_grid = np.linspace(0.01, 3.0, 100)
@@ -93,7 +93,7 @@ import seaborn as sns
 PROJECT_FOLDER = '/Users/kaankeskin/projects/sch_pe/' 
 SAVE_PATH = PROJECT_FOLDER + 'data/processed/parameter_recovery_805080.csv'
 # Recovery settings
-n_trial = 300
+n_trial = 60
 n_iterations = 30  # Number of simulations per parameter pair
 true_alphas = [0.1, 0.3, 0.5, 0.7, 0.9]
 true_taus = [1.5, 4.5, 9.0] # Tau'nun farklı seviyelerini de test etmek önemli# Grid Search Definition (Matching your main analysis)
@@ -169,8 +169,8 @@ plt.subplot(1, 2, 2)
 sns.regplot(data=recovery_df, x='true_tau', y='rec_tau', scatter_kws={'alpha':0.3}, color='#2A9D8F')
 plt.plot([0, 10], [0, 10], 'r--', label='Identity Line')
 plt.title(f'Tau Recovery (r={tau_r:.2f})')
-plt.xlabel('True Tau')
-plt.ylabel('Recovered Tau')
+plt.xlabel('True Beta')
+plt.ylabel('Recovered Beta')
 plt.legend()
 plt.tight_layout()
 plt.savefig('../../results/figures/parameter_recovery_MAP.png')

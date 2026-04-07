@@ -110,23 +110,23 @@ def statistic(x, y):
     return np.median(x) - np.median(y)
 # 2. İstatistik döngüsünü Permütasyon Testi ile güncelleyelim
 stats_results = {}
-print(f"{'Parametre':<10} | {'HC Mean':<10} | {'SZ Mean':<10} | {'Fark (HC-SZ)':<12} | {'Perm. p-val':<10}")
+print(f"{'Parametre':<10} | {'HC Median':<10} | {'SZ Median':<10} | {'Fark (HC-SZ)':<12} | {'Perm. p-val':<10}")
 print("-" * 65)
 for col in ['alpha', 'tau', 'pseudo_r2']:
-    g_hc = merged_df[merged_df['group'] == 0][col].values
-    g_sz = merged_df[merged_df['group'] == 1][col].values
+    # FIX: Change 0 and 1 to 'HC' and 'SZ', and add .dropna() just to be safe!
+    g_hc = merged_df[merged_df['group'] == 0][col].dropna().values
+    g_sz = merged_df[merged_df['group'] == 1][col].dropna().values
     # Boş küme kontrolü
     if len(g_hc) > 0 and len(g_sz) > 0:
         # Permütasyon Testi (10,000 iterasyon)
-        # 'independent' iki bağımsız grubu (HC vs SZ) temsil eder
         res = permutation_test((g_hc, g_sz), statistic, 
                                permutation_type='independent', 
                                n_resamples=10000, 
                                alternative='two-sided')
         stats_results[col] = res.pvalue
         # Sonuçları ekrana yazdır
-        diff = np.mean(g_hc) - np.mean(g_sz)
-        print(f"{col:<10} | {np.mean(g_hc):<10.3f} | {np.mean(g_sz):<10.3f} | {diff:<12.3f} | {res.pvalue:<10.4f}")
+        diff = np.median(g_hc) - np.median(g_sz)
+        print(f"{col:<10} | {np.median(g_hc):<10.3f} | {np.median(g_sz):<10.3f} | {diff:<12.3f} | {res.pvalue:<10.4f}")
     else:
         print(f"Uyarı: {col} için grup verisi eksik (HC: {len(g_hc)}, SZ: {len(g_sz)})")
         stats_results[col] = np.nan
@@ -137,9 +137,9 @@ from config import GROUP_COLORS # Imports your dictionary!
 plt.style.use('./paper_theme.mplstyle')
 group_mapping = {0 : 'HC', 1 : 'SZ'}
 merged_df['group'] = merged_df['group'].replace(group_mapping)
-fig, axes = plt.subplots(1, 3, figsize=(12, 5))
+fig, axes = plt.subplots(1, 3)
 params_to_plot = ['alpha', 'tau', 'pseudo_r2']
-titles = ['Alpha', 'Tau', 'Pseudo R2']
+titles = ['Alpha', 'Beta', 'Pseudo R2']
 for i, param in enumerate(params_to_plot):
     sns.boxplot(x='group', y=param, data=merged_df, ax=axes[i], palette=GROUP_COLORS)
     sns.stripplot(x='group', y=param, data=merged_df, ax=axes[i], color='black', alpha=0.3)

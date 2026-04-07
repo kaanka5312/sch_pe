@@ -42,14 +42,20 @@ pd.DataFrame(all_merged).to_csv('/Users/kaankeskin/projects/sch_pe/data/processe
 #  STAGE 2: Computational Analysis
 # This part runs respective scripts for the computational analysis
 # =====================================================================
-# Control analysis that does the model recover parameters succesfully
-run_task('./recovery_MAP.py')
-# Fits basic RL model 
-run_task('./model_fitting_MAP.py')
-# Checking subjects fit for visualization
-run_task('./PPC_RL.py')
 # Calculates win-stay-lose-shift 
 run_task('./wsls.py')
+# Fits basic RL model 
+run_task('./model_fitting_MAP.py')
+# Comparison of model parameters (also somewhat in model_fitting_MAP)
+# This extra includes potential covariates and lineer models.
+run_task('./model_parameteres_statistic.py')
+# Prediction Error comparison between groups and potential covariates 
+# using lineer mixed model.
+run_task('./PE_statistics.py')
+# Control analysis that does the model recover parameters succesfully
+run_task('./recovery_MAP.py')
+# Checking subjects fit for visualization
+run_task('./PPC_RL.py')
 # Comparison between adaptive alpha and fixed alpha
 run_task('./model_cemre.py')
 # Creating PE's for the fMRI analyiss 
@@ -58,12 +64,6 @@ run_task('./pe_regressor.py')
 # %% =====================================================================
 #  STAGE 3: Statistical Analysis for computational parameters 
 # =====================================================================
-# Comparison of model parameters (also somewhat in model_fitting_MAP)
-# This extra includes potential covariates and lineer models.
-run_task('./model_parameteres_statistic.py')
-# Prediction Error comparison between groups and potential covariates 
-# using lineer mixed model.
-run_task('./PE_statistics.py')
 
 if __name__ == "__main__":
     main()
