@@ -21,7 +21,7 @@ tic
 for i= 1:numel(pe_table.denekId) % Subject's name
 
     %if i == 39 || i==74 || i==44 %ecemyilmaz 74 has 3 more TR? - S.name numbers
-    if i==20 || i==25 || i ==50 || i==73 % 20 s.kanik preprocessing files ?, b.akkoc?
+    if i==20 || i==25 || i ==50 || i==73 || i==52 % 20 s.kanik preprocessing files ?, b.akkoc?, 52-aceren segmentation failure
         disp('Breaking loop to skip subject');
         continue;  
     end
@@ -72,71 +72,71 @@ for i= 1:numel(pe_table.denekId) % Subject's name
         f = spm_select('FPList', data_path, '^f.*\.nii$');
         s = spm_select('FPList', data_path_s, '^s.*\.nii$');
         
-%         % -----------------------------------------------------------
-%         % 1) PREPROCESSING
-%         % -----------------------------------------------------------
-% % 
-% %       % realign
-%         clear jobs matlabbatch;
-%         load('./codes/spm_batch/01_realign_task.mat');
-%         %jobs{1} = matlabbatch{1};
-%         matlabbatch{1}.spm.spatial.realign.estwrite.data{1} = cellstr(f);
-%         save([data_path '/01_BATCH_realign_task.mat'], 'matlabbatch');
-%         spm_jobman('run', matlabbatch);
-% % 
-% %         % slice timing
-%         clear jobs matlabbatch;
-%         load('./codes/spm_batch/02_slice_task.mat');
-%         % jobs{1} = matlabbatch{1};
-%         a = spm_select('FPList', data_path, '^rf.*\.nii');
-%         matlabbatch{1}.spm.temporal.st.scans{1} = cellstr(a);
-%         save([data_path '/02_BATCH_slice_task.mat'], 'matlabbatch');
-%         spm_jobman('run', matlabbatch);
-% % 
-% %         % coregistration
-%         clear jobs matlabbatch;
-%         load('./codes/spm_batch/03_coreg_task.mat');
-%         %jobs{1} = matlabbatch{1};
-%         m = spm_select('FPList', data_path, '^mean.*\.nii$');
-%         matlabbatch{1}.spm.spatial.coreg.estimate.ref = cellstr(m);
-%         matlabbatch{1}.spm.spatial.coreg.estimate.source = cellstr(s);
-%         save([data_path '/03_BATCH_coreg_task.mat'], 'matlabbatch');
-%         spm_jobman('run', matlabbatch);
-% % 
-% % %         % segmentation
-%         clear jobs matlabbatch;
-%         load('./codes/spm_batch/04_segment.mat');
-%         % Update *all* tissue entries to point to your local TPM path
-%         for ii = 1:6
-%              matlabbatch{1}.spm.spatial.preproc.tissue(ii).tpm = {sprintf('/Users/kaankeskin/Documents/MATLAB/spm/tpm/TPM.nii,%d', ii)};
-%         end
+        % -----------------------------------------------------------
+        % 1) PREPROCESSING
+        % -----------------------------------------------------------
 % 
-%         % Provide the structural image(s) to segment
-%         matlabbatch{1}.spm.spatial.preproc.channel.vols = cellstr(s);
+%       % realign
+        clear jobs matlabbatch;
+        load('./codes/spm_batch/01_realign_task.mat');
+        %jobs{1} = matlabbatch{1};
+        matlabbatch{1}.spm.spatial.realign.estwrite.data{1} = cellstr(f);
+        save([data_path '/01_BATCH_realign_task.mat'], 'matlabbatch');
+        spm_jobman('run', matlabbatch);
 % 
-%         save([data_path '/04_BATCH_segment.mat'], 'matlabbatch');
-%         spm_jobman('run', matlabbatch);
-% % % 
+%         % slice timing
+        clear jobs matlabbatch;
+        load('./codes/spm_batch/02_slice_task.mat');
+        % jobs{1} = matlabbatch{1};
+        a = spm_select('FPList', data_path, '^rf.*\.nii');
+        matlabbatch{1}.spm.temporal.st.scans{1} = cellstr(a);
+        save([data_path '/02_BATCH_slice_task.mat'], 'matlabbatch');
+        spm_jobman('run', matlabbatch);
+% 
+%         % coregistration
+        clear jobs matlabbatch;
+        load('./codes/spm_batch/03_coreg_task.mat');
+        %jobs{1} = matlabbatch{1};
+        m = spm_select('FPList', data_path, '^mean.*\.nii$');
+        matlabbatch{1}.spm.spatial.coreg.estimate.ref = cellstr(m);
+        matlabbatch{1}.spm.spatial.coreg.estimate.source = cellstr(s);
+        save([data_path '/03_BATCH_coreg_task.mat'], 'matlabbatch');
+        spm_jobman('run', matlabbatch);
+% 
+% %         % segmentation
+        clear jobs matlabbatch;
+        load('./codes/spm_batch/04_segment.mat');
+        % Update *all* tissue entries to point to your local TPM path
+        for ii = 1:6
+             matlabbatch{1}.spm.spatial.preproc.tissue(ii).tpm = {sprintf('/Users/kaankeskin/Documents/MATLAB/spm/tpm/TPM.nii,%d', ii)};
+        end
+
+        % Provide the structural image(s) to segment
+        matlabbatch{1}.spm.spatial.preproc.channel.vols = cellstr(s);
+
+        save([data_path '/04_BATCH_segment.mat'], 'matlabbatch');
+        spm_jobman('run', matlabbatch);
 % % 
-% %         % normalize
-%         clear jobs matlabbatch;
-%         load('./codes/spm_batch/05_normalise_task.mat');
-%         %jobs{1} = matlabbatch{1};
-%         rf = spm_select('FPList', data_path, '^ar.*\.nii$');
-%         seg= spm_select('FPList', data_path_s, '^y.*\.nii$');
-%         matlabbatch{1}.spm.spatial.normalise.write.subj.resample = cellstr(rf);
-%         matlabbatch{1}.spm.spatial.normalise.write.subj.def = cellstr(seg);
-%         save([data_path '/05_BATCH_normalise_task.mat'], 'matlabbatch');
-%         spm_jobman('run', matlabbatch);
-% % 
-% %         % smooth
-%         clear jobs matlabbatch;
-%         load('./codes/spm_batch/06_smooth_task.mat');
-%         %jobs{1} = matlabbatch{1};
-%         wrf = spm_select('FPList', data_path, '^war.*\.nii$');
-%         matlabbatch{1}.spm.spatial.smooth.data = cellstr(wrf);
-%         save([data_path '/06_BATCH_smooth_task.mat'], 'matlabbatch');
-%         spm_jobman('run', matlabbatch);
+% 
+%         % normalize
+        clear jobs matlabbatch;
+        load('./codes/spm_batch/05_normalise_task.mat');
+        %jobs{1} = matlabbatch{1};
+        rf = spm_select('FPList', data_path, '^ar.*\.nii$');
+        seg= spm_select('FPList', data_path_s, '^y.*\.nii$');
+        matlabbatch{1}.spm.spatial.normalise.write.subj.resample = cellstr(rf);
+        matlabbatch{1}.spm.spatial.normalise.write.subj.def = cellstr(seg);
+        save([data_path '/05_BATCH_normalise_task.mat'], 'matlabbatch');
+        spm_jobman('run', matlabbatch);
+% 
+%         % smooth
+        clear jobs matlabbatch;
+        load('./codes/spm_batch/06_smooth_task.mat');
+        %jobs{1} = matlabbatch{1};
+        wrf = spm_select('FPList', data_path, '^war.*\.nii$');
+        matlabbatch{1}.spm.spatial.smooth.data = cellstr(wrf);
+        save([data_path '/06_BATCH_smooth_task.mat'], 'matlabbatch');
+        spm_jobman('run', matlabbatch);
 
         
         % -----------------------------------------------------------
@@ -157,20 +157,17 @@ for i= 1:numel(pe_table.denekId) % Subject's name
          % Assign functional images to the design
          jobs{1}.spm.stats.fmri_spec.sess.scans = cellstr(fl);
 
-         % ------ HERE: Insert subject-specific regressors ------
-        % GEREKSIZ
-        %For example, if each subject has 'regressors.txt' in their 'task' folder:
-        %regressorFile = fullfile([datadir2 S.name{i} '/functional/task/'], 'regressor.txt'); 
-        %if exist(regressorFile, 'file')
-            %jobs{1}.spm.stats.fmri_spec.sess.multi_reg = {regressorFile};
-        %else
-            %warning('Regressor file not found: %s', regressorFile);
-        %end
-
-        % jobs{1}.spm.stats.fmri_spec.sess(1).regress(1).name = 'pe_all';
-        % jobs{1}.spm.stats.fmri_spec.sess(1).regress(1).val = ...
-        %     load(fullfile([datadir2 S.name{i} '/functional/task/'], 'pe_all.txt'));  % Example values
-        % 
+         % 1. Locate the Motion Parameter File (generated in Realign step)
+         % This file starts with 'rp_' and ends with '.txt'
+         motion_file = spm_select('FPList', data_path, '^rp_.*\.txt$');
+            
+         if ~isempty(motion_file)
+                % Assign the motion parameters as Multiple Regressors
+             jobs{1}.spm.stats.fmri_spec.sess.multi_reg = {motion_file};
+             display(['Added motion parameters for: ' result_name]);
+         else
+             warning('Motion parameter file (rp_*.txt) not found for: %s', result_name);
+         end
 
         trials_raw = load('./codes/onset.txt'); 
         TR = 3; 

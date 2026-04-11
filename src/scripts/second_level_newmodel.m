@@ -69,7 +69,7 @@ for c_num = contrasts_to_run
 end
 
 %% One sample t-test for activation 
-con_name = 'con_0026.nii';
+con_name = 'con_0022.nii';
 
 groups = {'SZ', 'HC'};
 for g = 1:2
