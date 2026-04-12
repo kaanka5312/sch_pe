@@ -58,12 +58,11 @@ run_task('./recovery_MAP.py')
 run_task('./PPC_RL.py')
 # Comparison between adaptive alpha and fixed alpha
 run_task('./model_cemre.py')
+# Comparison between the fixed alpha model and double alpha and nulll 
+# model
+run_task('./model_dualalpha.py')
 # Creating PE's for the fMRI analyiss 
 run_task('./pe_regressor.py')
-
-# %% =====================================================================
-#  STAGE 3: Statistical Analysis for computational parameters 
-# =====================================================================
 
 if __name__ == "__main__":
     main()

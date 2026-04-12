@@ -45,6 +45,9 @@ df_clean['AP_z'] = scale_z('ap')
 df_clean['education_z'] = scale_z('education')
 df_clean['PANSS_neg_z'] = scale_z('PANSS-Negative')
 df_clean['PANSS_pos_z'] = scale_z('PANSS-Positive')
+df_clean['scors_z'] = scale_z('SCORS-GA')
+df_clean['oscars_z'] = scale_z('OSCARS-TA')
+df_clean['frogs_z'] = scale_z('FROGS')
 
 # %% 3. MODEL 1: GROUP DIFFERENCES
 # NOTE : The residuals doesnt follow the gaussian distrubution, thus the assumption (See the he Omnibus and Jarque-Bera tests)
@@ -65,6 +68,23 @@ print(fit_alpha_clinical.summary())
 print(fit_tau_clinical.summary())
 
 
+# %% 4. MODEL 2: CLINICAL CONFOUNDING (SZ ONLY)
+sz_only = df_clean[df_clean['group'] == 'SZ'].copy()
+fit_alpha_clinical = smf.ols('alpha ~ DOI +  PANSS_neg_z', data=sz_only).fit()
+fit_tau_clinical = smf.ols('log_tau ~ DOI + PANSS_neg_z', data=sz_only).fit()
+print("\n--- SZ Clinical Correlates: Alpha ---")
+print(fit_alpha_clinical.summary())
+print(fit_tau_clinical.summary())
+
+# %%  This can be report in the supplement to check oscars (cognition) to 
+# computational parameters.
+sz_only = df_clean[df_clean['group'] == 'SZ'].copy()
+fit_alpha_clinical = smf.ols('alpha ~   oscars_z', data=sz_only).fit()
+fit_tau_clinical = smf.ols('log_tau ~  oscars_z', data=sz_only).fit()
+print("\n--- SZ Clinical Correlates: Alpha ---")
+print(fit_alpha_clinical.summary())
+print(fit_tau_clinical.summary())
+
 # %% 5. VISUALIZATION (Equivalent to ggplot2)
 plt.style.use('./paper_theme.mplstyle')
 fig, axes = plt.subplots(1, 2)
@@ -83,29 +103,4 @@ axes[1].set_ylabel('Beta (Log Scale)')
 #plt.savefig("../../results/figures/")
 plt.show()
 
-
-# %% PERMUTATION TEST: LOG_TAU (HC vs SZ)
-from scipy.stats import permutation_test
-import numpy as np
-# 1. Isolate the log_tau arrays for both groups
-hc_log_tau = df_clean[df_clean['group'] == 'HC']['log_tau'].values
-sz_log_tau = df_clean[df_clean['group'] == 'SZ']['log_tau'].values
-# 2. Define the test statistic (Difference in means)
-def diff_in_means(x, y):
-    return np.mean(x) - np.mean(y)
-def diff_in_medians(x, y):
-    return np.median(x) - np.median(y)
-# 3. Run the Permutation Test (10,000 resamples for high stability)
-perm_res = permutation_test(
-    (hc_log_tau, sz_log_tau), 
-    statistic=diff_in_medians, 
-    permutation_type='independent', 
-    n_resamples=10000, 
-    alternative='two-sided'
-)
-# 4. Print the Results cleanly
-print("\n--- PERMUTATION TEST: LOG_TAU ---")
-print(f"HC Mean (log_tau): {np.mean(hc_log_tau):.4f}")
-print(f"SZ Mean (log_tau): {np.mean(sz_log_tau):.4f}")
-print(f"Mean Difference:   {diff_in_means(hc_log_tau, sz_log_tau):.4f}")
-print(f"Permutation p-val: {perm_res.pvalue:.4f}")
+# %% Testing for any relationship between parameters and AP dosage
