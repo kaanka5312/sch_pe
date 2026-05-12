@@ -2,16 +2,12 @@
 library(tableone)
 library(readxl)
 library(tidyverse)
-
 # Windows
-setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
-
+#setwd("C:/Users/kaank/OneDrive/Belgeler/GitHub/sch_pe/")
 # Macos 
-#setwd("/Users/kaankeskin/projects/sch_pe/")
-#dat <- read_xlsx("./data/raw/DataElif.xlsx")
-
+setwd("/Users/kaankeskin/projects/sch_pe/")
 subj_table <- read.csv("./data/raw/subjects_list.csv")
-subj_table <- subset(subj_table, !(subj %in% c(9, 39, 44, 74)))
+subj_table <- subset(subj_table, !(subj %in% c(9, 39, 44, 74, 3,82,73 )))
 
 # Education Years will be added 
 varsToNum <- c("age", "ap", "AgeOfOnset", "DoI", "education", "PANSS.Total", "PANSS.Positive", "PANSS.Negative", "PANSS.General", "SCORS.GA", "FROGS", "ESRS")
@@ -80,7 +76,6 @@ suppressPackageStartupMessages({
   library(tableone)
   library(dplyr)
 })
-
 # Helper to derive the parent variable name from TableOne rownames robustly
 .extract_var <- function(rn) {
   rn <- trimws(rn)
@@ -89,7 +84,6 @@ suppressPackageStartupMessages({
   rn <- trimws(rn)
   rn
 }
-
 # Add a "Test (stat)" column to a printed TableOne:
 # - Continuous: Welch t-test [t(df)=..] for 2 groups; Welch ANOVA [F(df1, df2)=..] for >2 groups
 # - Categorical: Chi-square [X^2(df)=..] or Fisher's exact when expected counts < 5
@@ -98,18 +92,15 @@ augment_tableone_with_tests <- function(tab, data, group_var, vars, factorVars =
   if (is.null(factorVars)) factorVars <- character(0)
   cont_vars <- setdiff(vars, factorVars)
   cat_vars  <- intersect(vars, factorVars)
-  
   # ---- continuous tests ----
   cont_list <- lapply(cont_vars, function(v) {
     d <- data[, c(v, group_var)]
     names(d) <- c("x", "g")
     d <- d[!is.na(d$x) & !is.na(d$g), , drop = FALSE]
     d$g <- as.factor(d$g)
-    
     if (!is.numeric(d$x)) {
       return(data.frame(variable = v, test_name = "(non-numeric)", stat = "???", stringsAsFactors = FALSE))
     }
-    
     g_levels <- nlevels(d$g)
     if (g_levels <= 1L) {
       data.frame(variable = v, test_name = "(insufficient groups)", stat = "???", stringsAsFactors = FALSE)
@@ -135,7 +126,6 @@ augment_tableone_with_tests <- function(tab, data, group_var, vars, factorVars =
   })
   cont_tests <- if (length(cont_list)) do.call(rbind, cont_list) else
     data.frame(variable = character(), test_name = character(), stat = character())
-  
   # ---- categorical tests ----
   cat_list <- lapply(cat_vars, function(v) {
     tabx <- table(data[[v]], data[[group_var]], useNA = "no")
@@ -158,20 +148,16 @@ augment_tableone_with_tests <- function(tab, data, group_var, vars, factorVars =
   })
   cat_tests <- if (length(cat_list)) do.call(rbind, cat_list) else
     data.frame(variable = character(), test_name = character(), stat = character())
-  
   tests <- dplyr::bind_rows(cont_tests, cat_tests) %>%
     dplyr::mutate(variable = as.character(variable))
-  
   # ---- get printable TableOne ----
   printed <- as.data.frame(
     print(tab, smd = TRUE, test = TRUE, quote = FALSE, noSpaces = TRUE, printToggle = FALSE)
   )
-  
   # Build a clean variable key from rownames (robust to formatting)
   rn <- rownames(printed)
   printed$variable <- vapply(rn, .extract_var, character(1))
   printed$.row_id  <- ave(seq_len(nrow(printed)), printed$variable, FUN = seq_along)
-  
   # ---- join & build the "Test (stat)" column only on the first row of each variable ----
   out <- printed %>%
     dplyr::left_join(tests, by = "variable") %>%
@@ -188,7 +174,6 @@ augment_tableone_with_tests <- function(tab, data, group_var, vars, factorVars =
       )
     ) %>%
     dplyr::select(-.row_id, -variable, -dplyr::any_of(c("test_name", "stat")))
-  
   out
 }
 
@@ -245,7 +230,7 @@ doc <- body_add_par(doc, "Table 1. Demographic and Clinical Characteristics", st
 doc <- body_add_flextable(doc, ft)
 
 # Save the document
-print(doc, target = "./writing/table1_demographics.docx")
+print(doc, target = "./writing/table1_demographics_new.docx")
 
 # Just for ESRS
 esrs <- as.numeric(subj_table["CDSS"][subj_table["group"]==1])
